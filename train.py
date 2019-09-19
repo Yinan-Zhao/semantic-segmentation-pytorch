@@ -39,7 +39,7 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
 
         # forward pass
         #print(batch_data)
-        loss, acc = segmentation_module(batch_data[0])
+        loss, acc = segmentation_module(batch_data)
         loss = loss.mean()
         acc = acc.mean()
 

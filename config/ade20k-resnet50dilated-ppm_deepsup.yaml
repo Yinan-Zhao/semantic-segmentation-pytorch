@@ -27,7 +27,7 @@ TRAIN:
   weight_decay: 1e-4
   deep_sup_scale: 0.4
   fix_bn: False
-  workers: 4
+  workers: 1
   disp_iter: 20
   seed: 304
 

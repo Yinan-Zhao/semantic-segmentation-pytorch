@@ -38,6 +38,7 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
         adjust_learning_rate(optimizers, cur_iter, cfg)
 
         # forward pass
+        print(batch_data)
         loss, acc = segmentation_module(batch_data)
         loss = loss.mean()
         acc = acc.mean()

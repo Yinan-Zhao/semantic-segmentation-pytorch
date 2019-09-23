@@ -182,14 +182,19 @@ def main(cfg, gpus):
     iterator_train = iter(loader_train)
 
     # load nets into gpu
-    if len(gpus) > 1:
+    '''if len(gpus) > 1:
         segmentation_module = UserScatteredDataParallel(
             segmentation_module,
             device_ids=gpus)
         # For sync bn
         patch_replication_callback(segmentation_module)
     else:
-        segmentation_module = torch.nn.DataParallel(segmentation_module)
+        segmentation_module = torch.nn.DataParallel(segmentation_module)'''
+    segmentation_module = UserScatteredDataParallel(
+        segmentation_module,
+        device_ids=gpus)
+    # For sync bn
+    patch_replication_callback(segmentation_module)
     segmentation_module.cuda()
 
     # Set up optimizers

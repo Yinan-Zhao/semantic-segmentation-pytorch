@@ -1,0 +1,17 @@
++Project="AI_ROBOTICS"
++ProjectDescription=""
++GPUJob=true
+Requirements=(TARGET.GPUSlot) && ((target.machine == "eldar-21.cs.utexas.edu") || (target.machine == "eldar-22.cs.utexas.edu") || (target.machine == "eldar-23cs.utexas.edu") || (target.machine == "eldar-24.cs.utexas.edu") || (target.machine == "eldar-25.cs.utexas.edu") || (target.machine == "eldar-26.cs.utexas.edu") || (target.machine == "eldar-27.cs.utexas.edu") || (target.machine == "eldar-28.cs.utexas.edu") || (target.machine == "eldar-29.cs.utexas.edu") || (target.machine == "eldar-30.cs.utexas.edu") || (target.machine == "eldar-31.cs.utexas.edu") || (target.machine == "eldar-32.cs.utexas.edu") || (target.machine == "eldar-33.cs.utexas.edu") || (target.machine == "eldar-34.cs.utexas.edu") || (target.machine == "eldar-35.cs.utexas.edu") || (target.machine == "eldar-36.cs.utexas.edu") || (target.machine == "eldar-37.cs.utexas.edu") || (target.machine == "eldar-38.cs.utexas.edu") || (target.machine == "eldar-39.cs.utexas.edu") || (target.machine == "eldar-40.cs.utexas.edu") || (target.machine == "eldar-41.cs.utexas.edu") || (target.machine == "eldar-42.cs.utexas.edu") || (target.machine == "eldar-43.cs.utexas.edu") || (target.machine == "eldar-44.cs.utexas.edu") || (target.machine == "eldar-45.cs.utexas.edu") || (target.machine == "eldar-46.cs.utexas.edu") || (target.machine == "eldar-47.cs.utexas.edu") || (target.machine == "eldar-48.cs.utexas.edu") || (target.machine == "eldar-49.cs.utexas.edu") || (target.machine == "eldar-50.cs.utexas.edu"))
+Environment=PATH=/lusr/opt/condor/bin/:/lusr/opt/condor/bin/:$PATH
+
+Universe=vanilla
+Getenv=True
+
+Log=/scratch/cluster/alexzhao/semantic-segmentation-pytorch/condor_file/train_resnet50dilated.log
+Output=/scratch/cluster/alexzhao/semantic-segmentation-pytorch/condor_file/train_resnet50dilated.out
+Error=/scratch/cluster/alexzhao/semantic-segmentation-pytorch/condor_file/train_resnet50dilated.err
+
+Executable=/scratch/cluster/alexzhao/semantic-segmentation-pytorch/scripts/train_resnet50dilated.sh
+
+Queue 1
+

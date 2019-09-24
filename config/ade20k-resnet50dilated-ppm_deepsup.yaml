@@ -36,7 +36,7 @@ VAL:
   checkpoint: "epoch_20.pth"
 
 TEST:
-  checkpoint: "epoch_20.pth"
+  checkpoint: "epoch_7.pth"
   result: "./"
 
 DIR: "ckpt/ade20k-resnet50dilated-ppm_deepsup"

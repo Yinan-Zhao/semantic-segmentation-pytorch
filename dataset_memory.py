@@ -120,8 +120,8 @@ class TrainDataset(BaseDataset):
             if self.cur_idx >= self.num_sample:
                 self.cur_idx = 0
                 permutation = np.random.permutation(len(self.list_sample))
-                self.list_sample = self.list_sample[permutation]
-                self.ref_list = self.ref_list[permutation]
+                self.list_sample = [self.list_sample[i] for i in permutation]
+                self.ref_list = [self.ref_list[i] for i in permutation]
 
             if len(self.batch_record_list[0]) == self.batch_per_gpu:
                 batch_records = self.batch_record_list[0]
@@ -142,13 +142,8 @@ class TrainDataset(BaseDataset):
         if not self.if_shuffled:
             np.random.seed(index)
             permutation = np.random.permutation(len(self.list_sample))
-
-            print(permutation)
-            print(permutation.shape)
-            print(type(permutation))
-            print(permutation.dtype)
-            self.list_sample = self.list_sample[permutation]
-            self.ref_list = self.ref_list[permutation]
+            self.list_sample = [self.list_sample[i] for i in permutation]
+            self.ref_list = [self.ref_list[i] for i in permutation]
             self.if_shuffled = True
 
         # get sub-batch candidates

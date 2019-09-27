@@ -108,10 +108,9 @@ class SegmentationAttentionModule(SegmentationModuleBase):
     def memoryAttention(self, att_module, feat):
         key_ = []
         val_ = []
-        feat_valid = feat[-1]
-        batch_size, _, num_frames, height, width = feat_valid.size()
+        batch_size, _, num_frames, height, width = feat[-1].size()
         for t in range(num_frames):
-            key, val = att_module([feat_item[:,:,t] for feat_item in feat_valid])
+            key, val = att_module([feat_item[:,:,t] for feat_item in feat])
             key_.append(key)
             val_.append(val)
 

@@ -133,14 +133,8 @@ class SegmentationAttentionModule(SegmentationModuleBase):
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
                 qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
-                print('qread shape')
-                print(qread.shape)
-                print('qval shape')
-                print(qval.shape)
                 feature = torch.cat((qval, qread), dim=1)
-                print('feature shape')
-                print(feature.shape)
-                pred = self.decoder(feature)
+                pred = self.decoder([feature])
 
             loss = self.crit(pred, feed_dict['seg_label'])
             '''if self.deep_sup_scale is not None:
@@ -159,7 +153,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             feature = torch.cat((qval, qread), dim=1)
-            pred = self.decoder(feature)
+            pred = self.decoder([feature])
             return pred 
 
 

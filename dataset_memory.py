@@ -144,7 +144,9 @@ class TrainDataset(BaseDataset):
             permutation = np.random.permutation(len(self.list_sample))
 
             print(permutation)
+            print(permutation.shape)
             print(type(permutation))
+            print(permutation.dtype)
             self.list_sample = self.list_sample[permutation]
             self.ref_list = self.ref_list[permutation]
             self.if_shuffled = True

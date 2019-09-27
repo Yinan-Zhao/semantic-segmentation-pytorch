@@ -99,7 +99,7 @@ class TrainDataset(BaseDataset):
         self.ref_end = ref_end
 
         with open(ref_path, 'r') as f:
-            ref_list = f.readlines()
+            lines = f.readlines()
         self.ref_list = [[int(item) for item in line.strip().split()] for line in lines]
         assert len(self.ref_list) == len(self.list_sample)
 

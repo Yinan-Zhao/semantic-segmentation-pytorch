@@ -316,8 +316,8 @@ if __name__ == '__main__':
             cfg.DIR, 'att_memory_epoch_{}.pth'.format(cfg.TRAIN.start_epoch))
         cfg.MODEL.weights_decoder = os.path.join(
             cfg.DIR, 'decoder_epoch_{}.pth'.format(cfg.TRAIN.start_epoch))
-        assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) \
-            os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) \
+        assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) and \
+            os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) and \
             os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"
 
     # Parse gpu ids

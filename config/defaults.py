@@ -41,8 +41,14 @@ _C.MODEL.arch_decoder = "ppm_deepsup"
 _C.MODEL.weights_encoder = ""
 # weights to finetune net_decoder
 _C.MODEL.weights_decoder = ""
+_C.MODEL.weights_enc_query = ""
+_C.MODEL.weights_enc_memory = ""
+_C.MODEL.weights_att_query = ""
+_C.MODEL.weights_att_memory = ""
 # number of feature channels between encoder and decoder
 _C.MODEL.fc_dim = 2048
+
+
 
 # -----------------------------------------------------------------------------
 # Training

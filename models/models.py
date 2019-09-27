@@ -49,7 +49,7 @@ class SegmentationModule(SegmentationModuleBase):
 
 class SegmentationAttentionModule(SegmentationModuleBase):
     def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None):
-        super(SegmentationModule, self).__init__()
+        super(SegmentationAttentionModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
         self.attention_query = net_att_query

@@ -69,7 +69,7 @@ class BaseDataset(torch.utils.data.Dataset):
     def segm_one_hot(self, segm):
         segm = torch.from_numpy(np.array(segm)).long().unsqueeze(0)
         size = segm.size()
-        oneHot_size = (self.num_class+1, size[0], size[1])
+        oneHot_size = (self.num_class+1, size[1], size[2])
         segm_oneHot = torch.FloatTensor(torch.Size(oneHot_size)).zero_()
         segm_oneHot = segm_oneHot.scatter_(0, segm, 1.0)
         return segm_oneHot

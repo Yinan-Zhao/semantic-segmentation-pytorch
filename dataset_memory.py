@@ -229,7 +229,7 @@ class TrainDataset(BaseDataset):
 
             # prepare the references
             this_ref_list = ref_lists[i]
-            for k in range(self.ref_end-self.ref-start):
+            for k in range(self.ref_end - self.ref_start):
                 ref_record = self.list_sample_orig[this_ref_list[k]]
                 image_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
                 segm_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])

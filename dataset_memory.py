@@ -142,6 +142,9 @@ class TrainDataset(BaseDataset):
         if not self.if_shuffled:
             np.random.seed(index)
             permutation = np.random.permutation(len(self.list_sample))
+
+            print(permutation)
+            print(type(permutation))
             self.list_sample = self.list_sample[permutation]
             self.ref_list = self.ref_list[permutation]
             self.if_shuffled = True

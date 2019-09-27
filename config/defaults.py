@@ -25,6 +25,9 @@ _C.DATASET.padding_constant = 8
 _C.DATASET.segm_downsampling_rate = 8
 # randomly horizontally flip images when train/test
 _C.DATASET.random_flip = True
+_C.DATASET.ref_path = "./data/ref_training.txt"
+_C.DATASET.ref_start = 0
+_C.DATASET.ref_end = 1
 
 # -----------------------------------------------------------------------------
 # Model
@@ -73,6 +76,7 @@ _C.TRAIN.workers = 16
 _C.TRAIN.disp_iter = 20
 # manual seed
 _C.TRAIN.seed = 304
+_C.TRAIN.save_freq = 5
 
 # -----------------------------------------------------------------------------
 # Validation

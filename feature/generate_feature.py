@@ -73,13 +73,14 @@ centre_crop = trn.Compose([
         trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
+print('loading json')
 train_list_sample = [json.loads(x.rstrip()) for x in open(train_odgt, 'r')]
 val_list_sample = [json.loads(x.rstrip()) for x in open(val_odgt, 'r')]
 
 feat_train = np.zeros([len(train_list_sample), 2048])
 feat_val = np.zeros([len(val_list_sample), 2048])
 
-print('entering')
+print('entering loop')
 
 for i in range(len(train_list_sample)):
     if i%100 == 0:

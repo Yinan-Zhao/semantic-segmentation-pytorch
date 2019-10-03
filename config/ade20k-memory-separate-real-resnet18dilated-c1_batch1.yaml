@@ -10,7 +10,7 @@ DATASET:
   random_flip: True
   ref_path: "./data/ref_real_training.txt"
   ref_start: 1
-  ref_end: 3
+  ref_end: 2
 
 MODEL:
   arch_encoder: "resnet18dilated"

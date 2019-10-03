@@ -12,7 +12,7 @@ dis_val = distance_matrix(feat_val, feat_train)
 print('done')
 with open('/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/ref_real_val.txt', 'w') as f:
     for i in range(dis_val.shape[0]):
-        print(i)
+        #print(i)
         dis = dis_val[i]
         order = np.argsort(dis)
         for k, item in enumerate(order):
@@ -26,7 +26,7 @@ dis_train = distance_matrix(feat_train, feat_train)
 print('done')
 with open('/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/ref_real_training.txt', 'w') as f:
     for i in range(dis_train.shape[0]):
-        print(i)
+        #print(i)
         dis = dis_train[i]
         order = np.argsort(dis)
         for k, item in enumerate(order):

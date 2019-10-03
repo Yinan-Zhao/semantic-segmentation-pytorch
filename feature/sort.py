@@ -20,7 +20,7 @@ with open('/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/ref_real_val
             else:
                 f.write('%d\n'%(item))
 
-'''print('computing distance matrix')
+print('computing distance matrix')
 dis_train = distance_matrix(feat_train, feat_train)
 print('done')
 with open('/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/ref_real_training.txt', 'w') as f:
@@ -32,7 +32,7 @@ with open('/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/ref_real_tra
             if k != len(order)-1:
                 f.write('%d '%(item))
             else:
-                f.write('%d\n'%(item))'''
+                f.write('%d\n'%(item))
 
 
 

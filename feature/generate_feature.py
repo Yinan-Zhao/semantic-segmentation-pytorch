@@ -80,6 +80,8 @@ feat_train = np.zeros([len(train_list_sample), 2048])
 feat_val = np.zeros([len(val_list_sample), 2048])
 
 for i in range(len(train_list_sample)):
+    if i%100 == 0:
+        print(i)
     this_sample = train_list_sample[i]
     # load the test image
     img_name = data_root + this_sample['fpath_img']
@@ -93,6 +95,8 @@ for i in range(len(train_list_sample)):
 np.save(train_output, feat_train)
     
 for i in range(len(val_list_sample)):
+    if i%100 == 0:
+        print(i)
     this_sample = val_list_sample[i]
     # load the test image
     img_name = data_root + this_sample['fpath_img']

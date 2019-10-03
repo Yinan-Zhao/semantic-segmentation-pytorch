@@ -1,1 +1,1 @@
-from .models import ModelBuilder, SegmentationModule, SegmentationAttentionModule
+from .models import ModelBuilder, SegmentationModule, SegmentationAttentionModule, SegmentationAttentionSeparateModule

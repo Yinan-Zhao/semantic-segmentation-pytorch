@@ -65,6 +65,7 @@ model.load_state_dict(state_dict)
 model.eval()
 
 myModel = myResNet(model)
+myModel.cuda()
 
 # load the image transformer
 centre_crop = trn.Compose([
@@ -89,11 +90,11 @@ for i in range(len(train_list_sample)):
     # load the test image
     img_name = data_root + this_sample['fpath_img']
     img = Image.open(img_name)
-    input_img = V(centre_crop(img).unsqueeze(0))
+    input_img = V(centre_crop(img).unsqueeze(0)).cuda()
 
     # forward pass
     feat = myModel.forward(input_img)
-    feat_train[i] = feat[0].detach().numpy()
+    feat_train[i] = feat[0].cpu().detach().numpy()
 
 np.save(train_output, feat_train)
     
@@ -104,11 +105,11 @@ for i in range(len(val_list_sample)):
     # load the test image
     img_name = data_root + this_sample['fpath_img']
     img = Image.open(img_name)
-    input_img = V(centre_crop(img).unsqueeze(0))
+    input_img = V(centre_crop(img).unsqueeze(0)).cuda()
 
     # forward pass
     feat = myModel.forward(input_img)
-    feat_val[i] = feat[0].detach().numpy()
+    feat_val[i] = feat[0].cpu().detach().numpy()
 
 np.save(val_output, feat_val)
 

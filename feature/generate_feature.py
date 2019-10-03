@@ -43,8 +43,6 @@ class myResNet(nn.Module):
 
         return x
 
-print('starting')
-
 # th architecture to use
 arch = 'resnet50'
 train_odgt = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/training.odgt'
@@ -80,8 +78,6 @@ val_list_sample = [json.loads(x.rstrip()) for x in open(val_odgt, 'r')]
 
 feat_train = np.zeros([len(train_list_sample), 2048])
 feat_val = np.zeros([len(val_list_sample), 2048])
-
-print('entering loop')
 
 for i in range(len(train_list_sample)):
     if i%100 == 0:

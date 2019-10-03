@@ -86,7 +86,10 @@ for i in range(len(train_list_sample)):
     # load the test image
     img_name = data_root + this_sample['fpath_img']
     img = Image.open(img_name)
-    input_img = V(centre_crop(img).unsqueeze(0)).cuda()
+    input_img = V(centre_crop(img).unsqueeze(0))
+    if input_img.shape[1] == 1:
+        input_img = torch.stack([input_img,input_img,input_img], dim=1)
+    input_img = input_img.cuda()
 
     # forward pass
     feat = myModel.forward(input_img)
@@ -101,7 +104,10 @@ for i in range(len(val_list_sample)):
     # load the test image
     img_name = data_root + this_sample['fpath_img']
     img = Image.open(img_name)
-    input_img = V(centre_crop(img).unsqueeze(0)).cuda()
+    input_img = V(centre_crop(img).unsqueeze(0))
+    if input_img.shape[1] == 1:
+        input_img = torch.stack([input_img,input_img,input_img], dim=1)
+    input_img = input_img.cuda()
 
     # forward pass
     feat = myModel.forward(input_img)

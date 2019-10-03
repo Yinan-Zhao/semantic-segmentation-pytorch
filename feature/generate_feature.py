@@ -1,3 +1,4 @@
+print('starting')
 import torch
 from torch.autograd import Variable as V
 import torchvision.models as models
@@ -43,7 +44,7 @@ class myResNet(nn.Module):
 
         return x
 
-
+print('starting')
 
 # th architecture to use
 arch = 'resnet50'

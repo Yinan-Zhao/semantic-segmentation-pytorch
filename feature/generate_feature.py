@@ -5,6 +5,8 @@ from torchvision import transforms as trn
 from torch.nn import functional as F
 import torch.nn as nn
 import os
+import numpy as np
+import json
 from PIL import Image
 
 from functools import partial
@@ -45,7 +47,11 @@ class myResNet(nn.Module):
 
 # th architecture to use
 arch = 'resnet50'
-
+train_odgt = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/training.odgt'
+val_odgt = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/validation.odgt'
+data_root = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/'
+train_output = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/feature/feat_train.npy'
+val_output = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/feature/feat_val.npy'
 # load the pre-trained weights
 model_file = '%s_places365.pth.tar' % arch
 
@@ -67,14 +73,37 @@ centre_crop = trn.Compose([
         trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# load the test image
-img_name = '12.jpg'
-img = Image.open(img_name)
-input_img = V(centre_crop(img).unsqueeze(0))
+train_list_sample = [json.loads(x.rstrip()) for x in open(train_odgt, 'r')]
+val_list_sample = [json.loads(x.rstrip()) for x in open(val_odgt, 'r')]
 
-# forward pass
-feat = myModel.forward(input_img)
+feat_train = np.zeros([len(train_list_sample), 2048])
+feat_val = np.zeros([len(val_list_sample), 2048])
 
+for i in range(len(train_list_sample)):
+    this_sample = train_list_sample[i]
+    # load the test image
+    img_name = data_root + this_sample['fpath_img']
+    img = Image.open(img_name)
+    input_img = V(centre_crop(img).unsqueeze(0))
+
+    # forward pass
+    feat = myModel.forward(input_img)
+    feat_train[i] = feat[0].detach().numpy()
+
+np.save(train_output, feat_train)
+    
+for i in range(len(val_list_sample)):
+    this_sample = val_list_sample[i]
+    # load the test image
+    img_name = data_root + this_sample['fpath_img']
+    img = Image.open(img_name)
+    input_img = V(centre_crop(img).unsqueeze(0))
+
+    # forward pass
+    feat = myModel.forward(input_img)
+    feat_val[i] = feat[0].detach().numpy()
+
+np.save(val_output, feat_val)
 
 
 

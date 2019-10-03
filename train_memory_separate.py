@@ -289,7 +289,7 @@ if __name__ == '__main__':
         nargs=argparse.REMAINDER,
     )
     parser.add_argument(
-        "memory_enc_pretrained",
+        "--memory_enc_pretrained",
         action='store_true',
         help="use a pretrained memory encoder",
     )

@@ -79,6 +79,8 @@ val_list_sample = [json.loads(x.rstrip()) for x in open(val_odgt, 'r')]
 feat_train = np.zeros([len(train_list_sample), 2048])
 feat_val = np.zeros([len(val_list_sample), 2048])
 
+print('entering')
+
 for i in range(len(train_list_sample)):
     if i%100 == 0:
         print(i)

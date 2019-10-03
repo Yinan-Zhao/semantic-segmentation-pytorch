@@ -156,6 +156,123 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             pred = self.decoder([feature])
             return pred 
 
+class SegmentationAttentionSeparateModule(SegmentationModuleBase):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None):
+        super(SegmentationAttentionSeparateModule, self).__init__()
+        self.encoder_query = net_enc_query
+        self.encoder_memory = net_enc_memory
+        self.attention_query = net_att_query
+        self.attention_memory = net_att_memory
+        self.decoder = net_dec
+        self.crit = crit
+        self.deep_sup_scale = deep_sup_scale
+
+    def maskRead(self, qkey, qval, qmask, mkey, mval, mmask):
+        '''
+        read for *mask area* of query from *mask area* of memory
+        '''
+        B, Dk, _, H, W = mkey.size()
+        _, Dv, _, _, _ = mval.size()
+        qread = torch.zeros_like(qval)
+        # key: b,dk,t,h,w
+        # value: b,dv,t,h,w
+        # mask: b,1,t,h,w
+        for b in range(B):
+            # exceptions
+            if qmask[b,0].sum() == 0 or mmask[b,0].sum() == 0: 
+                # print('skipping read', qmask[b,0].sum(), mmask[b,0].sum())
+                # no query or mask pixels -> skip read
+                continue
+            qk_b = qkey[b,:,qmask[b,0]] # dk, Nq
+            mk_b = mkey[b,:,mmask[b,0]] # dk, Nm
+            mv_b = mval[b,:,mmask[b,0]] # dv, Nm 
+            # print(mv_b.shape)
+
+            p = torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
+            p = p / math.sqrt(Dk)
+            p = F.softmax(p, dim=0)
+
+            read = torch.mm(mv_b, p) # dv, Nq
+            # qval[b,:,qmask[b,0]] = read # dv, Nq
+            qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
+            
+        return qread
+
+    def memoryEncode(self, encoder, img_refs, return_feature_maps=True):
+        # encoding into memory
+        feat_ = []
+        batch_size, _, num_frames, height, width = img_refs.size()
+        for t in range(num_frames):
+            feat = encoder(img_refs[:,:,t], return_feature_maps=return_feature_maps)
+            feat_.append(feat)
+
+        feats = []
+        for i in range(len(feat_[0])):
+            tmp = []
+            for j in range(len(feat_)):
+                tmp.append(feat_[j][i])
+            feats.append(torch.stack(tmp, dim=2))
+        return feats
+
+    def memoryAttention(self, att_module, feat):
+        key_ = []
+        val_ = []
+        batch_size, _, num_frames, height, width = feat[-1].size()
+        for t in range(num_frames):
+            key, val = att_module([feat_item[:,:,t] for feat_item in feat])
+            key_.append(key)
+            val_.append(val)
+
+        keys = torch.stack(key_, dim=2)
+        vals = torch.stack(val_, dim=2)
+        return keys, vals
+
+    def forward(self, feed_dict, *, segSize=None):
+        # training
+        if segSize is None:
+            if self.deep_sup_scale is not None: # use deep supervision technique
+                raise Exception('deep_sup_scale is not implemented') 
+            else:
+                feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)                
+                qkey, qval = self.attention_query(feature_enc)
+                
+                feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
+                mkey, _ = self.memoryAttention(self.attention_query, feature_memory)
+
+                mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
+                _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
+
+                qmask = torch.ones_like(qkey)[:,0:1] > 0.
+                mmask = torch.ones_like(mkey)[:,0:1] > 0.
+                qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                feature = torch.cat((qval, qread), dim=1)
+                pred = self.decoder([feature])
+
+            loss = self.crit(pred, feed_dict['seg_label'])
+            '''if self.deep_sup_scale is not None:
+                loss_deepsup = self.crit(pred_deepsup, feed_dict['seg_label'])
+                loss = loss + loss_deepsup * self.deep_sup_scale'''
+
+            acc = self.pixel_acc(pred, feed_dict['seg_label'])
+            return loss, acc
+        # inference
+        else:
+            feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)                
+            qkey, qval = self.attention_query(feature_enc)
+            
+            feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
+            mkey, _ = self.memoryAttention(self.attention_query, feature_memory)
+
+            mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
+            _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
+
+            qmask = torch.ones_like(qkey)[:,0:1] > 0.
+            mmask = torch.ones_like(mkey)[:,0:1] > 0.
+            qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+            feature = torch.cat((qval, qread), dim=1)
+            pred = self.decoder([feature])
+            return pred 
+
 
 class ModelBuilder:
     # custom weights initialization
@@ -182,6 +299,24 @@ class ModelBuilder:
 
         # encoders are usually pretrained
         #net_encoder.apply(ModelBuilder.weights_init)
+        if len(weights) > 0:
+            print('Loading weights for net_encoder')
+            net_encoder.load_state_dict(
+                torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
+        return net_encoder
+
+    @staticmethod
+    def build_encoder_memory_separate(arch='resnet50dilated', fc_dim=512, weights='', num_class=150, pretrained=True):
+        arch = arch.lower()
+        if arch == 'resnet18dilated':
+            orig_resnet = resnet.__dict__['resnet18'](pretrained=pretrained)
+            net_encoder = ResnetDilated_Memory_Separate(orig_resnet, dilate_scale=8, num_class=num_class)
+        else:
+            raise Exception('Architecture undefined!')
+
+        # encoders are usually pretrained
+        if not pretrained:
+            net_encoder.apply(ModelBuilder.weights_init)
         if len(weights) > 0:
             print('Loading weights for net_encoder')
             net_encoder.load_state_dict(
@@ -434,6 +569,71 @@ class ResnetDilated_Memory(nn.Module):
 
         nn.init.kaiming_normal_(self.conv1.weight.data)
         self.conv1.weight.data[:,0:3,:,:] = orig_resnet.conv1.weight.data
+
+    def _nostride_dilate(self, m, dilate):
+        classname = m.__class__.__name__
+        if classname.find('Conv') != -1:
+            # the convolution with stride
+            if m.stride == (2, 2):
+                m.stride = (1, 1)
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate//2, dilate//2)
+                    m.padding = (dilate//2, dilate//2)
+            # other convoluions
+            else:
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate, dilate)
+                    m.padding = (dilate, dilate)
+
+    def forward(self, x, return_feature_maps=False):
+        conv_out = []
+
+        x = self.relu1(self.bn1(self.conv1(x)))
+        x = self.relu2(self.bn2(self.conv2(x)))
+        x = self.relu3(self.bn3(self.conv3(x)))
+        x = self.maxpool(x)
+
+        x = self.layer1(x); conv_out.append(x);
+        x = self.layer2(x); conv_out.append(x);
+        x = self.layer3(x); conv_out.append(x);
+        x = self.layer4(x); conv_out.append(x);
+
+        if return_feature_maps:
+            return conv_out
+        return [x]
+
+class ResnetDilated_Memory_Separate(nn.Module):
+    def __init__(self, orig_resnet, dilate_scale=8, num_class=150):
+        super(ResnetDilated_Memory_Separate, self).__init__()
+        from functools import partial
+
+        if dilate_scale == 8:
+            orig_resnet.layer3.apply(
+                partial(self._nostride_dilate, dilate=2))
+            orig_resnet.layer4.apply(
+                partial(self._nostride_dilate, dilate=4))
+        elif dilate_scale == 16:
+            orig_resnet.layer4.apply(
+                partial(self._nostride_dilate, dilate=2))
+
+        # take pretrained resnet, except AvgPool and FC
+        #self.conv1 = orig_resnet.conv1
+        self.conv1 = conv3x3(1+num_class, 64, stride=2)
+        self.bn1 = orig_resnet.bn1
+        self.relu1 = orig_resnet.relu1
+        self.conv2 = orig_resnet.conv2
+        self.bn2 = orig_resnet.bn2
+        self.relu2 = orig_resnet.relu2
+        self.conv3 = orig_resnet.conv3
+        self.bn3 = orig_resnet.bn3
+        self.relu3 = orig_resnet.relu3
+        self.maxpool = orig_resnet.maxpool
+        self.layer1 = orig_resnet.layer1
+        self.layer2 = orig_resnet.layer2
+        self.layer3 = orig_resnet.layer3
+        self.layer4 = orig_resnet.layer4
+
+        nn.init.kaiming_normal_(self.conv1.weight.data)
 
     def _nostride_dilate(self, m, dilate):
         classname = m.__class__.__name__

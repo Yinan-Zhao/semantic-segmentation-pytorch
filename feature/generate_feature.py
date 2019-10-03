@@ -9,6 +9,39 @@ from PIL import Image
 from functools import partial
 import pickle
 
+class myResNet(nn.Module):
+    def __init__(self, orig_resnet):
+        super(myResNet, self).__init__()
+        self.conv1 = orig_resnet.conv1
+        self.bn1 = orig_resnet.bn1
+        self.relu = orig_resnet.relu
+        self.maxpool = orig_resnet.maxpool
+
+        self.layer1 = orig_resnet.layer1
+        self.layer2 = orig_resnet.layer2
+        self.layer3 = orig_resnet.layer3
+        self.layer4 = orig_resnet.layer4
+
+        self.avgpool = orig_resnet.avgpool
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+
+        return x
+
+
+
 # th architecture to use
 arch = 'resnet50'
 
@@ -24,6 +57,7 @@ state_dict = {str.replace(k,'module.',''): v for k,v in checkpoint['state_dict']
 model.load_state_dict(state_dict)
 model.eval()
 
+myModel = myResNet(model)
 
 # load the image transformer
 centre_crop = trn.Compose([
@@ -38,6 +72,8 @@ img = Image.open(img_name)
 input_img = V(centre_crop(img).unsqueeze(0))
 
 # forward pass
-logit = model.forward(input_img)
-h_x = F.softmax(logit, 1).data.squeeze()
-probs, idx = h_x.sort(0, True)
+feat = myModel.forward(input_img)
+
+
+
+

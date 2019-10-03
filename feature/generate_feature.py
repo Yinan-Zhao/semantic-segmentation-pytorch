@@ -88,7 +88,7 @@ for i in range(len(train_list_sample)):
     img = Image.open(img_name)
     input_img = V(centre_crop(img).unsqueeze(0))
     if input_img.shape[1] == 1:
-        input_img = torch.stack([input_img,input_img,input_img], dim=1)
+        input_img = torch.cat([input_img,input_img,input_img], dim=1)
     input_img = input_img.cuda()
 
     # forward pass
@@ -106,7 +106,7 @@ for i in range(len(val_list_sample)):
     img = Image.open(img_name)
     input_img = V(centre_crop(img).unsqueeze(0))
     if input_img.shape[1] == 1:
-        input_img = torch.stack([input_img,input_img,input_img], dim=1)
+        input_img = torch.cat([input_img,input_img,input_img], dim=1)
     input_img = input_img.cuda()
 
     # forward pass

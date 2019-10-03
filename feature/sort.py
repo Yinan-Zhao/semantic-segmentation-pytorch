@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.spatial import distance_matrix
+from sklearn.metrics import pairwise_distances as distance_matrix
+#from scipy.spatial import distance_matrix
 
 train_input = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/feature/feat_train.npy'
 val_input = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/feature/feat_val.npy'

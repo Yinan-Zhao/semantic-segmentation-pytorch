@@ -9,6 +9,7 @@ feat_val = np.load(val_input)
 dis_train = distance_matrix(feat_train, feat_train)
 with open('/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/ref_real_training.txt', 'w') as f:
     for i in range(dis_train.shape[0]):
+        print(i)
         dis = dis_train[i]
         order = np.argsort(dis)
         for k, item in enumerate(order):

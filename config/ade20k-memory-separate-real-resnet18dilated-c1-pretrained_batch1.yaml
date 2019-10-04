@@ -9,6 +9,7 @@ DATASET:
   segm_downsampling_rate: 8
   random_flip: True
   ref_path: "./data/ref_real_training.txt"
+  ref_val_path: "./data/ref_real_val.txt"
   ref_start: 1
   ref_end: 2
   ref_val_start: 0

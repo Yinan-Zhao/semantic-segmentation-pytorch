@@ -271,8 +271,28 @@ class ValDataset(BaseDataset):
         super(ValDataset, self).__init__(odgt, opt, **kwargs)
         self.root_dataset = root_dataset
 
+        self.train_list_sample = [json.loads(x.rstrip()) for x in open(opt.list_train, 'r')]
+
+        self.train_num_sample = len(self.train_list_sample)
+        assert self.train_num_sample > 0
+        print('# training samples: {}'.format(self.train_num_sample))
+
+        self.ref_start = opt.ref_val_start
+        self.ref_end = opt.ref_val_end
+
+        with open(opt.ref_val_path, 'r') as f:
+            lines = f.readlines()
+        self.ref_list = [[int(item) for item in line.strip().split()] for line in lines]
+
+        start_idx = kwargs['start_idx']
+        end_idx = kwargs['end_idx']
+        if start_idx >= 0 and end_idx >= 0:     # divide file list
+            self.ref_list = self.ref_list[start_idx:end_idx]
+        assert len(self.ref_list) == len(self.list_sample)
+
     def __getitem__(self, index):
         this_record = self.list_sample[index]
+        this_ref_list = self.ref_list[index]
         # load image and label
         image_path = os.path.join(self.root_dataset, this_record['fpath_img'])
         segm_path = os.path.join(self.root_dataset, this_record['fpath_segm'])
@@ -282,9 +302,15 @@ class ValDataset(BaseDataset):
         assert(img.size[0] == segm.size[0])
         assert(img.size[1] == segm.size[1])
 
+        # segm transform, to torch long tensor HxW
+        segm = self.segm_transform(segm)
+        batch_segms = torch.unsqueeze(segm, 0)
+
         ori_width, ori_height = img.size
 
         img_resized_list = []
+        ref_rgb_resized_list = []
+        ref_mask_resized_list = []
         for this_short_size in self.imgSizes:
             # calculate target height and width
             scale = min(this_short_size / float(min(ori_height, ori_width)),
@@ -303,14 +329,42 @@ class ValDataset(BaseDataset):
             img_resized = torch.unsqueeze(img_resized, 0)
             img_resized_list.append(img_resized)
 
-        # segm transform, to torch long tensor HxW
-        segm = self.segm_transform(segm)
-        batch_segms = torch.unsqueeze(segm, 0)
+            batch_refs_rgb = torch.zeros(
+                3, self.ref_end-self.ref_start, target_height, target_width)
+            batch_refs_mask = torch.zeros(
+                1+self.num_class, self.ref_end-self.ref_start, target_height, target_width)
+
+            for k in range(self.ref_end - self.ref_start):
+                ref_record = self.train_list_sample[this_ref_list[k+self.ref_start]]
+                image_ref_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
+                segm_ref_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])
+
+                img_ref = Image.open(image_ref_path).convert('RGB')
+                segm_ref = Image.open(segm_ref_path)
+                assert(segm_ref.mode == "L")
+                assert(img_ref.size[0] == segm_ref.size[0])
+                assert(img_ref.size[1] == segm_ref.size[1])
+
+                img_ref = imresize(img_ref, (target_width, target_height), interp='bilinear')
+                segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+
+                img_ref = self.img_transform(img_ref)
+                segm_ref = self.segm_one_hot(segm_ref)
+
+                batch_refs_rgb[:, k, :img_ref.shape[1], :img_ref.shape[2]] = img_ref
+                batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+
+            batch_refs_rgb = torch.unsqueeze(batch_refs_rgb, 0)
+            batch_refs_mask = torch.unsqueeze(batch_refs_mask, 0)
+            ref_rgb_resized_list.append(batch_refs_rgb)
+            ref_mask_resized_list.append(batch_refs_mask)
 
         output = dict()
         output['img_ori'] = np.array(img)
         output['img_data'] = [x.contiguous() for x in img_resized_list]
         output['seg_label'] = batch_segms.contiguous()
+        output['img_refs_rgb'] = [x. contiguous() for x in ref_rgb_resized_list]
+        output['img_refs_mask'] = [x. contiguous() for x in ref_mask_resized_list]
         output['info'] = this_record['fpath_img']
         return output
 

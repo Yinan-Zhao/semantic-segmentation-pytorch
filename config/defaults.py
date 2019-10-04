@@ -26,8 +26,11 @@ _C.DATASET.segm_downsampling_rate = 8
 # randomly horizontally flip images when train/test
 _C.DATASET.random_flip = True
 _C.DATASET.ref_path = "./data/ref_training.txt"
+_C.DATASET.ref_val_path = "./data/ref_real_val.txt"
 _C.DATASET.ref_start = 0
 _C.DATASET.ref_end = 1
+_C.DATASET.ref_val_start = 0
+_C.DATASET.ref_val_end = 1
 
 # -----------------------------------------------------------------------------
 # Model

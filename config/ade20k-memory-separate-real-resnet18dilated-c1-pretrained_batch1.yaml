@@ -40,10 +40,10 @@ TRAIN:
 
 VAL:
   visualize: False
-  checkpoint: "epoch_20.pth"
+  checkpoint: "epoch_15.pth"
 
 TEST:
-  checkpoint: "epoch_20.pth"
+  checkpoint: "epoch_15.pth"
   result: "./"
 
 DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-pretrained_batch1"

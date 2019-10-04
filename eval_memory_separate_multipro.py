@@ -110,8 +110,7 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
         arch=cfg.MODEL.arch_encoder.lower(),
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_enc_memory,
-        num_class=cfg.DATASET.num_class,
-        pretrained=cfg.memory_enc_pretrained)
+        num_class=cfg.DATASET.num_class)
     net_att_query = ModelBuilder.build_encoder(
         arch='attention',
         fc_dim=cfg.MODEL.fc_dim,

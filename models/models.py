@@ -153,7 +153,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             feature = torch.cat((qval, qread), dim=1)
-            pred = self.decoder([feature])
+            pred = self.decoder([feature], segSize=segSize)
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
@@ -270,7 +270,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             feature = torch.cat((qval, qread), dim=1)
-            pred = self.decoder([feature])
+            pred = self.decoder([feature], segSize=segSize)
             return pred 
 
 

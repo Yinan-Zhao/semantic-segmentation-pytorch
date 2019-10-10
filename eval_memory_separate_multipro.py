@@ -222,6 +222,11 @@ if __name__ == '__main__':
         help="put gt in the memory",
     )
     parser.add_argument(
+        "--debug_with_double_random",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
         "--debug_with_translated_gt",
         action='store_true',
         help="put gt in the memory",
@@ -233,6 +238,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_gt = args.debug_with_gt
     cfg.DATASET.debug_with_random = args.debug_with_random
     cfg.DATASET.debug_with_translated_gt = args.debug_with_translated_gt
+    cfg.DATASET.debug_with_double_random = args.debug_with_double_random
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

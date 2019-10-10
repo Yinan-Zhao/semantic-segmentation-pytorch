@@ -289,6 +289,7 @@ class ValDataset(BaseDataset):
         self.debug_with_gt = opt.debug_with_gt
         self.debug_with_translated_gt = opt.debug_with_translated_gt
         self.debug_with_random = opt.debug_with_random
+        self.debug_with_double_random = opt.debug_with_double_random
 
         self.ref_start = opt.ref_val_start
         self.ref_end = opt.ref_val_end
@@ -389,6 +390,12 @@ class ValDataset(BaseDataset):
                     batch_refs_rgb[:, k, :img_resized_gt.shape[1], :img_resized_gt.shape[2]] = img_resized_gt
                     
                     segm_ref = Image.open(os.path.join(self.root_dataset, ref_record['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_double_random:
+                    ref_record_tmp = self.train_list_sample[this_ref_list[k+10+self.ref_start]]
+                    segm_ref = Image.open(os.path.join(self.root_dataset, ref_record_tmp['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
                     batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref

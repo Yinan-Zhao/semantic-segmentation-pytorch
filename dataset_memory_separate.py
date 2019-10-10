@@ -287,6 +287,8 @@ class ValDataset(BaseDataset):
         print('# training samples: {}'.format(self.train_num_sample))
 
         self.debug_with_gt = opt.debug_with_gt
+        self.debug_with_translated_gt = opt.debug_with_translated_gt
+        self.debug_with_random = opt.debug_with_random
 
         self.ref_start = opt.ref_val_start
         self.ref_end = opt.ref_val_end
@@ -370,6 +372,23 @@ class ValDataset(BaseDataset):
                     batch_refs_rgb[:, k, :img_resized_gt.shape[1], :img_resized_gt.shape[2]] = img_resized_gt
                     
                     segm_ref = Image.open(os.path.join(self.root_dataset, this_record['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_translated_gt:
+                    img_resized_gt = img_resized[0]
+                    translation = 20
+                    batch_refs_rgb[:, k, translation:img_resized_gt.shape[1], translation:img_resized_gt.shape[2]] = img_resized_gt[:,:img_resized_gt.shape[1]-translation, :img_resized_gt.shape[2]-translation]
+                    
+                    segm_ref = Image.open(os.path.join(self.root_dataset, this_record['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs_mask[:, k, translation:segm_ref.shape[1], translation:segm_ref.shape[2]] = segm_ref[:, :segm_ref.shape[1]-translation, :segm_ref.shape[2]-translation]
+                elif self.debug_with_random:
+                    img_resized_gt = img_resized[0]
+                    batch_refs_rgb[:, k, :img_resized_gt.shape[1], :img_resized_gt.shape[2]] = img_resized_gt
+                    
+                    segm_ref = Image.open(os.path.join(self.root_dataset, ref_record['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
                     batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref

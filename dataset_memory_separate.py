@@ -247,8 +247,9 @@ class TrainDataset(BaseDataset):
                 img = Image.open(image_path).convert('RGB')
                 segm = Image.open(segm_path)
                 assert(segm.mode == "L")
-                assert(img.size[0] == segm.size[0])
-                assert(img.size[1] == segm.size[1])
+                if not self.no_align:
+                    assert(img.size[0] == segm.size[0])
+                    assert(img.size[1] == segm.size[1])
 
                 if np.random.choice([0, 1]):
                     img = img.transpose(Image.FLIP_LEFT_RIGHT)

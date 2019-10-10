@@ -98,6 +98,8 @@ class TrainDataset(BaseDataset):
         self.ref_start = ref_start
         self.ref_end = ref_end
 
+        self.no_align = opt.no_align
+
         with open(ref_path, 'r') as f:
             lines = f.readlines()
         self.ref_list = [[int(item) for item in line.strip().split()] for line in lines]
@@ -232,9 +234,15 @@ class TrainDataset(BaseDataset):
             # prepare the references
             this_ref_list = ref_lists[i]
             for k in range(self.ref_end - self.ref_start):
-                ref_record = self.list_sample_orig[this_ref_list[k+self.ref_start]]
-                image_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
-                segm_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])
+                if self.no_align:
+                    ref_record1 = self.list_sample_orig[this_ref_list[k+self.ref_start]]
+                    ref_record2 = self.list_sample_orig[this_ref_list[k+self.ref_start+10]]
+                    image_path = os.path.join(self.root_dataset, ref_record1['fpath_img'])
+                    segm_path = os.path.join(self.root_dataset, ref_record2['fpath_segm'])
+                else:
+                    ref_record = self.list_sample_orig[this_ref_list[k+self.ref_start]]
+                    image_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
+                    segm_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])
 
                 img = Image.open(image_path).convert('RGB')
                 segm = Image.open(segm_path)

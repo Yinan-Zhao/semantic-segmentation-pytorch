@@ -220,7 +220,7 @@ if __name__ == '__main__':
 
     cfg.merge_from_file(args.cfg)
     cfg.merge_from_list(args.opts)
-    cfg.debug_with_gt = args.debug_with_gt
+    cfg.DATASET.debug_with_gt = args.debug_with_gt
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

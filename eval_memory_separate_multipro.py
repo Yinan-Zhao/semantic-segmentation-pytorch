@@ -211,10 +211,16 @@ if __name__ == '__main__':
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--debug_with_gt",
+        action='store_true',
+        help="put gt in the memory",
+    )
     args = parser.parse_args()
 
     cfg.merge_from_file(args.cfg)
     cfg.merge_from_list(args.opts)
+    cfg.debug_with_gt = args.debug_with_gt
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

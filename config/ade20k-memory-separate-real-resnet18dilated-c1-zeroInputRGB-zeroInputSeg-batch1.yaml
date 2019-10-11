@@ -1,0 +1,51 @@
+DATASET:
+  root_dataset: "./data/"
+  list_train: "./data/training.odgt"
+  list_val: "./data/validation.odgt"
+  num_class: 150
+  imgSizes: (300, 375, 450, 525, 600)
+  imgMaxSize: 1000
+  padding_constant: 8
+  segm_downsampling_rate: 8
+  random_flip: True
+  ref_path: "./data/ref_real_training.txt"
+  ref_val_path: "./data/ref_real_val.txt"
+  ref_start: 1
+  ref_end: 2
+  ref_val_start: 0
+  ref_val_end: 1
+  zero_input_rgb: True
+  zero_input_seg: True
+
+MODEL:
+  arch_encoder: "resnet18dilated"
+  arch_decoder: "c1"
+  fc_dim: 512
+
+TRAIN:
+  batch_size_per_gpu: 1
+  num_epoch: 20
+  start_epoch: 0
+  epoch_iters: 5000
+  optim: "SGD"
+  lr_encoder: 0.02
+  lr_decoder: 0.02
+  lr_pow: 0.9
+  beta1: 0.9
+  weight_decay: 1e-4
+  deep_sup_scale: 0.4
+  fix_bn: False
+  workers: 4
+  disp_iter: 20
+  seed: 304
+  save_freq: 5
+
+VAL:
+  visualize: True
+  checkpoint: "epoch_20.pth"
+
+TEST:
+  checkpoint: "epoch_20.pth"
+  result: "./"
+
+DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-zeroInputRGB-zeroInputSeg-batch1"

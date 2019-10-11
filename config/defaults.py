@@ -32,6 +32,8 @@ _C.DATASET.ref_end = 1
 _C.DATASET.ref_val_start = 0
 _C.DATASET.ref_val_end = 1
 _C.DATASET.no_align = False
+_C.DATASET.zero_input_rgb = False
+_C.DATASET.zero_input_seg = False
 
 # -----------------------------------------------------------------------------
 # Model

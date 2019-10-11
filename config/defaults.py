@@ -51,6 +51,7 @@ _C.MODEL.weights_att_query = ""
 _C.MODEL.weights_att_memory = ""
 # number of feature channels between encoder and decoder
 _C.MODEL.fc_dim = 2048
+_C.MODEL.zero_memory = False
 
 
 

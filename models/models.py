@@ -246,7 +246,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
                 np.save('debug/img_refs_mask.npy', feed_dict['img_refs_mask'].detach().cpu().float().numpy())
-                np.save('debug/mask_feature_memory.npy', np.array([feat.detach().cpu().float().numpy() for feat in mask_feature_memory]))
+                for idx, feat in enumerate(mask_feature_memory):
+                    print(feat.shape)
+                    np.save('debug/mask_feature_memory_%d.npy'%(idx), feat.detach().cpu().float().numpy())
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.

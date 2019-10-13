@@ -5,7 +5,6 @@ import torchvision
 import math
 from . import resnet, resnext, mobilenet, hrnet
 from lib.nn import SynchronizedBatchNorm2d
-import pdb
 BatchNorm2d = SynchronizedBatchNorm2d
 
 
@@ -279,7 +278,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             else:
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)
-            pdb.set_trace()
+            
+            tmp = feature.cpu().float().numpy()
+            np.save('tmp.npz', tmp)
+
             return pred 
 
 

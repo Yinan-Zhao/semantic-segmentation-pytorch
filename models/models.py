@@ -331,6 +331,7 @@ class ModelBuilder:
             orig_resnet = resnet.__dict__['resnet18_noBN']()
             net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class)
         else:
+            print(arch)
             raise Exception('Architecture undefined!')
 
         # encoders are usually pretrained

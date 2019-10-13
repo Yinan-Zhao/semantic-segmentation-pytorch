@@ -181,7 +181,7 @@ def main(cfg, gpus):
         weights=cfg.MODEL.weights_enc_query)
     if cfg.MODEL.memory_encoder_noBN:
         net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.arch_encoder.lower()+'_noBN',
+            arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
             fc_dim=cfg.MODEL.fc_dim,
             weights=cfg.MODEL.weights_enc_memory,
             num_class=cfg.DATASET.num_class)

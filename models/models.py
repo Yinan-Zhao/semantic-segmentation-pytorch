@@ -194,8 +194,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             p = p / math.sqrt(Dk)
             p = F.softmax(p, dim=0)
 
-            np.save('debug/mv_b.npz', mv_b.cpu().float().numpy())
-            np.save('debug/p.npz', p.cpu().float().numpy())
+            np.save('debug/mv_b.npz', mv_b.detach().cpu().float().numpy())
+            np.save('debug/p.npz', p.detach().cpu().float().numpy())
 
             read = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
@@ -262,7 +262,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 loss = loss + loss_deepsup * self.deep_sup_scale'''
 
             acc = self.pixel_acc(pred, feed_dict['seg_label'])
-            np.save('debug/decoder_feature.npz', feature.cpu().float().numpy())
+            np.save('debug/decoder_feature.npz', feature.detach().cpu().float().numpy())
             return loss, acc
         # inference
         else:

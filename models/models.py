@@ -197,10 +197,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             read = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
             qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
-        np.save('debug/mv_b.npy', mv_b.detach().cpu().float().numpy())
-        np.save('debug/p.npy', p.detach().cpu().float().numpy())
-        np.save('debug/mval.npy', mval.detach().cpu().float().numpy())
-        np.save('debug/qread.npy', qread.detach().cpu().float().numpy())
+        #np.save('debug/mv_b.npy', mv_b.detach().cpu().float().numpy())
+        #np.save('debug/p.npy', p.detach().cpu().float().numpy())
+        #np.save('debug/mval.npy', mval.detach().cpu().float().numpy())
+        #np.save('debug/qread.npy', qread.detach().cpu().float().numpy())
         return qread
 
     def memoryEncode(self, encoder, img_refs, return_feature_maps=True):
@@ -245,10 +245,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mkey, _ = self.memoryAttention(self.attention_query, feature_memory)
 
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
-                np.save('debug/img_refs_mask.npy', feed_dict['img_refs_mask'].detach().cpu().float().numpy())
-                for idx, feat in enumerate(mask_feature_memory):
-                    print(feat.shape)
-                    np.save('debug/mask_feature_memory_%d.npy'%(idx), feat.detach().cpu().float().numpy())
+                #np.save('debug/img_refs_mask.npy', feed_dict['img_refs_mask'].detach().cpu().float().numpy())
+                #for idx, feat in enumerate(mask_feature_memory):
+                #    print(feat.shape)
+                #    np.save('debug/mask_feature_memory_%d.npy'%(idx), feat.detach().cpu().float().numpy())
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.

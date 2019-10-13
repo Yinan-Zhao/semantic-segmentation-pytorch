@@ -194,6 +194,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             p = p / math.sqrt(Dk)
             p = F.softmax(p, dim=0)
 
+            np.save('debug/mv_b.npz', mv_b.cpu().float().numpy())
+            np.save('debug/p.npz', p.cpu().float().numpy())
+
             read = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
             qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
@@ -280,8 +283,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)
             
-            tmp = feature.cpu().float().numpy()
-            np.save('tmp.npz', tmp)
+            np.save('debug/decoder_feature.npz', feature.cpu().float().numpy())
 
             return pred 
 

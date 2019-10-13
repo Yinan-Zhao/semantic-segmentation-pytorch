@@ -262,6 +262,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 loss = loss + loss_deepsup * self.deep_sup_scale'''
 
             acc = self.pixel_acc(pred, feed_dict['seg_label'])
+            np.save('debug/decoder_feature.npz', feature.cpu().float().numpy())
             return loss, acc
         # inference
         else:
@@ -282,8 +283,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             else:
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)
-            
-            np.save('debug/decoder_feature.npz', feature.cpu().float().numpy())
 
             return pred 
 

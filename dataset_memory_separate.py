@@ -101,6 +101,7 @@ class TrainDataset(BaseDataset):
         self.no_align = opt.no_align
         self.zero_input_rgb = opt.zero_input_rgb
         self.zero_input_seg = opt.zero_input_seg
+        self.random_input_seg = opt.random_input_seg
 
         with open(ref_path, 'r') as f:
             lines = f.readlines()
@@ -264,10 +265,14 @@ class TrainDataset(BaseDataset):
 
                 batch_refs_rgb[i][:, k, :img.shape[1], :img.shape[2]] = img
                 batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = segm
+
                 if self.zero_input_rgb:
                     batch_refs_rgb[i][:, k, :img.shape[1], :img.shape[2]] = 0.
+
                 if self.zero_input_seg:
                     batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = 0.
+                elif self.random_input_seg:
+                    batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
 
         output = dict()
         output['img_data'] = batch_images

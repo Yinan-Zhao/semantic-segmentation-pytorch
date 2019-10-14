@@ -55,6 +55,8 @@ _C.MODEL.weights_att_memory = ""
 # number of feature channels between encoder and decoder
 _C.MODEL.fc_dim = 2048
 _C.MODEL.zero_memory = False
+_C.MODEL.random_memory_bias = False
+_C.MODEL.random_memory_nobias = False
 _C.MODEL.memory_encoder_noBN = False
 
 

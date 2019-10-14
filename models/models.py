@@ -158,7 +158,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -256,6 +256,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
                 if self.zero_memory:
                     feature = torch.cat((qval, torch.zeros_like(qread)), dim=1)
+                elif self.random_memory_bias:
+                    feature = torch.cat((qval, torch.rand_like(qread)), dim=1)
+                elif self.random_memory_nobias:
+                    feature = torch.cat((qval, torch.rand_like(qread)-0.5), dim=1)
                 else:
                     feature = torch.cat((qval, qread), dim=1)
                 pred = self.decoder([feature])
@@ -283,6 +287,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             if self.zero_memory:
                 feature = torch.cat((qval, torch.zeros_like(qread)), dim=1)
+            elif self.random_memory_bias:
+                feature = torch.cat((qval, torch.rand_like(qread)), dim=1)
+            elif self.random_memory_nobias:
+                feature = torch.cat((qval, torch.rand_like(qread)-0.5), dim=1)
             else:
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)

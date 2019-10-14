@@ -168,6 +168,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.crit = crit
         self.deep_sup_scale = deep_sup_scale
         self.zero_memory = zero_memory
+        self.random_memory_bias = random_memory_bias
+        self.random_memory_nobias = random_memory_nobias
 
     def maskRead(self, qkey, qval, qmask, mkey, mval, mmask):
         '''

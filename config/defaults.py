@@ -57,6 +57,7 @@ _C.MODEL.fc_dim = 2048
 _C.MODEL.zero_memory = False
 _C.MODEL.random_memory_bias = False
 _C.MODEL.random_memory_nobias = False
+_C.MODEL.random_scale = 1.0
 _C.MODEL.memory_encoder_noBN = False
 
 

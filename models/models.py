@@ -158,7 +158,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -171,6 +171,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.random_memory_bias = random_memory_bias
         self.random_memory_nobias = random_memory_nobias
         self.random_scale = random_scale
+        self.zero_qval = zero_qval
 
     def maskRead(self, qkey, qval, qmask, mkey, mval, mmask):
         '''
@@ -257,6 +258,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
                 qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                if self.zero_qval:
+                    qval = torch.zeros_like(qval)
+
                 if self.zero_memory:
                     feature = torch.cat((qval, torch.zeros_like(qread)), dim=1)
                 elif self.random_memory_bias:
@@ -288,6 +292,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+            if self.zero_qval:
+                qval = torch.zeros_like(qval)
+
             if self.zero_memory:
                 feature = torch.cat((qval, torch.zeros_like(qread)), dim=1)
             elif self.random_memory_bias:

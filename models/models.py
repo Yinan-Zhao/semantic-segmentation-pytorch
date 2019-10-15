@@ -260,9 +260,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 if self.zero_memory:
                     feature = torch.cat((qval, torch.zeros_like(qread)), dim=1)
                 elif self.random_memory_bias:
-                    feature = self.random_scale*torch.cat((qval, torch.rand_like(qread)), dim=1)
+                    feature = torch.cat((qval, self.random_scale*torch.rand_like(qread)), dim=1)
                 elif self.random_memory_nobias:
-                    feature = self.random_scale*torch.cat((qval, torch.rand_like(qread)-0.5), dim=1)
+                    feature = torch.cat((qval, self.random_scale*(torch.rand_like(qread)-0.5)), dim=1)
                 else:
                     feature = torch.cat((qval, qread), dim=1)
                 pred = self.decoder([feature])
@@ -291,9 +291,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if self.zero_memory:
                 feature = torch.cat((qval, torch.zeros_like(qread)), dim=1)
             elif self.random_memory_bias:
-                feature = self.random_scale*torch.cat((qval, torch.rand_like(qread)), dim=1)
+                feature = torch.cat((qval, self.random_scale*torch.rand_like(qread)), dim=1)
             elif self.random_memory_nobias:
-                feature = self.random_scale*torch.cat((qval, torch.rand_like(qread)-0.5), dim=1)
+                feature = torch.cat((qval, self.random_scale*(torch.rand_like(qread)-0.5)), dim=1)
             else:
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)

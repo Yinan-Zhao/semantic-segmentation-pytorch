@@ -8,6 +8,7 @@ from distutils.version import LooseVersion
 # Numerical libs
 import torch
 import torch.nn as nn
+import numpy as np
 # Our libs
 from config import cfg
 from dataset_memory_separate import TrainDataset

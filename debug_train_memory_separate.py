@@ -51,8 +51,8 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
         # measure elapsed time
         batch_time.update(time.time() - tic)
         tic = time.time()
-    np.save('debug/qread.npy', np.stack(qread_all))
-    np.save('debug/qval.npy', np.stack(qval_all))
+        np.save('debug/qread_%03d.npy'%(i), qread_all[i])
+        np.save('debug/qval_%03d.npy'%(i), qval_all[i])
 
 
 def checkpoint(nets, history, cfg, epoch):

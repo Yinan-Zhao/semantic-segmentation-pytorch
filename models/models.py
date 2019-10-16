@@ -158,7 +158,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -172,6 +172,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.random_memory_nobias = random_memory_nobias
         self.random_scale = random_scale
         self.zero_qval = zero_qval
+
+        self.debug = debug
 
     def maskRead(self, qkey, qval, qmask, mkey, mval, mmask):
         '''
@@ -277,7 +279,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 loss = loss + loss_deepsup * self.deep_sup_scale'''
 
             acc = self.pixel_acc(pred, feed_dict['seg_label'])
-            return loss, acc
+            if self.debug:
+                return loss, acc, qread, qval
+            else:
+                return loss, acc
         # inference
         else:
             feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)                

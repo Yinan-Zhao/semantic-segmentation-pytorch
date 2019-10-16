@@ -240,7 +240,7 @@ def main(cfg, gpus):
     optimizers = create_optimizers(nets, cfg)
 
     for epoch in range(0, 1):
-        train(segmentation_module, iterator_train, optimizers, history, epoch+1, cfg)
+        train(segmentation_module, iterator_train, optimizers, None, epoch+1, cfg)
 
     print('Training Done!')
 

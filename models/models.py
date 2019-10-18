@@ -158,7 +158,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -172,6 +172,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.random_memory_nobias = random_memory_nobias
         self.random_scale = random_scale
         self.zero_qval = zero_qval
+        self.qval_qread_BN = qval_qread_BN
+        if qval_qread_BN:
+            self.bn_val = BatchNorm2d(net_att_query.out_dim)
+            self.bn_read = BatchNorm2d(net_att_memory.out_dim)
 
         self.debug = debug
 
@@ -260,6 +264,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
                 qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+
+                if self.qval_qread_BN:
+                    qval = self.bn_val(qval)
+                    qread = self.bn_read(qread)
+
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)
 
@@ -297,6 +306,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+            
+            if self.qval_qread_BN:
+                qval = self.bn_val(qval)
+                qread = self.bn_read(qread)
+
             if self.zero_qval:
                 qval = torch.zeros_like(qval)
 
@@ -896,6 +910,7 @@ class AttModule(nn.Module):
                       stride=1, padding=1, bias=False)
         self.value_conv = nn.Conv2d(fc_dim, fc_dim//2, kernel_size=3,
                       stride=1, padding=1, bias=False)
+        self.out_dim = fc_dim//2
 
     def forward(self, conv_out):
         conv5 = conv_out[-1]

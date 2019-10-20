@@ -359,14 +359,14 @@ class ModelBuilder:
         return net_encoder
 
     @staticmethod
-    def build_encoder_memory_separate(arch='resnet50dilated', fc_dim=512, weights='', num_class=150, pretrained=True):
+    def build_encoder_memory_separate(arch='resnet50dilated', fc_dim=512, weights='', num_class=150, RGB_mask_combine_val=False, pretrained=True):
         arch = arch.lower()
         if arch == 'resnet18dilated':
             orig_resnet = resnet.__dict__['resnet18'](pretrained=pretrained)
-            net_encoder = ResnetDilated_Memory_Separate(orig_resnet, dilate_scale=8, num_class=num_class)
+            net_encoder = ResnetDilated_Memory_Separate(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
         elif arch == 'resnet18dilated_nobn':
             orig_resnet = resnet.__dict__['resnet18_noBN']()
-            net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class)
+            net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
         else:
             print(arch)
             raise Exception('Architecture undefined!')
@@ -660,7 +660,7 @@ class ResnetDilated_Memory(nn.Module):
         return [x]
 
 class ResnetDilated_Memory_Separate(nn.Module):
-    def __init__(self, orig_resnet, dilate_scale=8, num_class=150):
+    def __init__(self, orig_resnet, dilate_scale=8, num_class=150, RGB_mask_combine_val=False):
         super(ResnetDilated_Memory_Separate, self).__init__()
         from functools import partial
 
@@ -675,7 +675,11 @@ class ResnetDilated_Memory_Separate(nn.Module):
 
         # take pretrained resnet, except AvgPool and FC
         #self.conv1 = orig_resnet.conv1
-        self.conv1 = conv3x3(1+num_class, 64, stride=2)
+        if RGB_mask_combine_val:
+            self.conv1 = conv3x3(3+1+num_class, 64, stride=2)
+        else:
+            self.conv1 = conv3x3(1+num_class, 64, stride=2)
+
         self.bn1 = orig_resnet.bn1
         self.relu1 = orig_resnet.relu1
         self.conv2 = orig_resnet.conv2
@@ -691,6 +695,8 @@ class ResnetDilated_Memory_Separate(nn.Module):
         self.layer4 = orig_resnet.layer4
 
         nn.init.kaiming_normal_(self.conv1.weight.data)
+        if RGB_mask_combine_val:
+            self.conv1.weight.data[:,0:3,:,:] = orig_resnet.conv1.weight.data
 
     def _nostride_dilate(self, m, dilate):
         classname = m.__class__.__name__
@@ -725,7 +731,7 @@ class ResnetDilated_Memory_Separate(nn.Module):
         return [x]
 
 class ResnetDilated_Memory_Separate_noBN(nn.Module):
-    def __init__(self, orig_resnet, dilate_scale=8, num_class=150):
+    def __init__(self, orig_resnet, dilate_scale=8, num_class=150, RGB_mask_combine_val=False):
         super(ResnetDilated_Memory_Separate_noBN, self).__init__()
         from functools import partial
 
@@ -740,7 +746,11 @@ class ResnetDilated_Memory_Separate_noBN(nn.Module):
 
         # take pretrained resnet, except AvgPool and FC
         #self.conv1 = orig_resnet.conv1
-        self.conv1 = conv3x3(1+num_class, 64, stride=2)
+        if RGB_mask_combine_val:
+            self.conv1 = conv3x3(3+1+num_class, 64, stride=2)
+        else:
+            self.conv1 = conv3x3(1+num_class, 64, stride=2)
+        
         self.relu1 = orig_resnet.relu1
         self.conv2 = orig_resnet.conv2
         self.relu2 = orig_resnet.relu2

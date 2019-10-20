@@ -102,6 +102,7 @@ class TrainDataset(BaseDataset):
         self.zero_input_rgb = opt.zero_input_rgb
         self.zero_input_seg = opt.zero_input_seg
         self.random_input_seg = opt.random_input_seg
+        self.RGB_mask_combine_val = opt.RGB_mask_combine_val
 
         with open(ref_path, 'r') as f:
             lines = f.readlines()
@@ -186,10 +187,16 @@ class TrainDataset(BaseDataset):
             self.batch_per_gpu,
             batch_height // self.segm_downsampling_rate,
             batch_width // self.segm_downsampling_rate).long()
+
         batch_refs_rgb = torch.zeros(
             self.batch_per_gpu, 3, self.ref_end-self.ref_start, batch_height, batch_width)
-        batch_refs_mask = torch.zeros(
-            self.batch_per_gpu, 1+self.num_class, self.ref_end-self.ref_start, batch_height, batch_width)
+
+        if self.RGB_mask_combine_val:
+            batch_refs_mask = torch.zeros(
+                self.batch_per_gpu, 3+1+self.num_class, self.ref_end-self.ref_start, batch_height, batch_width)
+        else:
+            batch_refs_mask = torch.zeros(
+                self.batch_per_gpu, 1+self.num_class, self.ref_end-self.ref_start, batch_height, batch_width)
 
         for i in range(self.batch_per_gpu):
             this_record = batch_records[i]
@@ -264,15 +271,25 @@ class TrainDataset(BaseDataset):
                 segm = self.segm_one_hot(segm)
 
                 batch_refs_rgb[i][:, k, :img.shape[1], :img.shape[2]] = img
-                batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = segm
+                if self.RGB_mask_combine_val:
+                    batch_refs_mask[i][0:3, k, :segm.shape[1], :segm.shape[2]] = img
+                    batch_refs_mask[i][3:, k, :segm.shape[1], :segm.shape[2]] = segm
+                else:
+                    batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = segm
 
                 if self.zero_input_rgb:
                     batch_refs_rgb[i][:, k, :img.shape[1], :img.shape[2]] = 0.
 
                 if self.zero_input_seg:
-                    batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = 0.
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[i][3:, k, :segm.shape[1], :segm.shape[2]] = 0.
+                    else:
+                        batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = 0.
                 elif self.random_input_seg:
-                    batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[i][3:, k, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
+                    else:
+                        batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
 
         output = dict()
         output['img_data'] = batch_images

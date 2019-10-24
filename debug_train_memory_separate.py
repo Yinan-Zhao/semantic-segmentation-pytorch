@@ -53,8 +53,8 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
         tic = time.time()
         np.save('debug/qread_%03d.npy'%(i), qread_all[i])
         np.save('debug/qval_%03d.npy'%(i), qval_all[i])
-        np.save('debug/mv_b_%03d.npy'%(i), mv_b)
-        np.save('debug/p_%03d.npy'%(i), p)
+        np.save('debug/mv_b_%03d.npy'%(i), mv_b.detach().cpu().float().numpy())
+        np.save('debug/p_%03d.npy'%(i), p.detach().cpu().float().numpy())
 
 
 def checkpoint(nets, history, cfg, epoch):

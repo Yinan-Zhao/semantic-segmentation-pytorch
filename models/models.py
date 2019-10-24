@@ -211,7 +211,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         #np.save('debug/p.npy', p.detach().cpu().float().numpy())
         #np.save('debug/mval.npy', mval.detach().cpu().float().numpy())
         #np.save('debug/qread.npy', qread.detach().cpu().float().numpy())
-        return qread
+        return mv_b, p, qread
 
     def memoryEncode(self, encoder, img_refs, return_feature_maps=True):
         # encoding into memory
@@ -263,7 +263,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
-                qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
 
                 if self.qval_qread_BN:
                     qval = self.bn_val(qval)
@@ -289,7 +289,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             acc = self.pixel_acc(pred, feed_dict['seg_label'])
             if self.debug:
-                return loss, acc, qread, qval
+                return loss, acc, qread, qval, mv_b, p
             else:
                 return loss, acc
         # inference
@@ -305,7 +305,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
-            qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+            mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             
             if self.qval_qread_BN:
                 qval = self.bn_val(qval)

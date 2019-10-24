@@ -42,7 +42,7 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
 
         # forward pass
         #print(batch_data)
-        loss, acc, qread, qval = segmentation_module(batch_data)
+        loss, acc, qread, qval, mv_b, p = segmentation_module(batch_data)
         loss = loss.mean()
         acc = acc.mean()
 
@@ -53,6 +53,8 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
         tic = time.time()
         np.save('debug/qread_%03d.npy'%(i), qread_all[i])
         np.save('debug/qval_%03d.npy'%(i), qval_all[i])
+        np.save('debug/mv_b_%03d.npy'%(i), mv_b)
+        np.save('debug/p_%03d.npy'%(i), p)
 
 
 def checkpoint(nets, history, cfg, epoch):

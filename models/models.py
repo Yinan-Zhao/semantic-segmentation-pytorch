@@ -158,7 +158,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -173,6 +173,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.random_scale = random_scale
         self.zero_qval = zero_qval
         self.qval_qread_BN = qval_qread_BN
+        self.normalize_key = normalize_key
         if qval_qread_BN:
             self.bn_val = BatchNorm2d(net_att_query.out_dim)
             self.bn_read = BatchNorm2d(net_att_memory.out_dim)
@@ -263,6 +264,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
+
+                if self.normalize_key:
+                    qkey = F.normalize(qkey, p=2, dim=1)
+                    mkey = F.normalize(mkey, p=2, dim=1)
+
                 qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
 
                 if self.qval_qread_BN:
@@ -305,7 +311,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
-            mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+
+            if self.normalize_key:
+                qkey = F.normalize(qkey, p=2, dim=1)
+                mkey = F.normalize(mkey, p=2, dim=1)
+            
+            qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             
             if self.qval_qread_BN:
                 qval = self.bn_val(qval)

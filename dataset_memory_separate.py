@@ -324,7 +324,7 @@ class ValDataset(BaseDataset):
         self.debug_with_translated_gt = opt.debug_with_translated_gt
         self.debug_with_random = opt.debug_with_random
         self.debug_with_double_random = opt.debug_with_double_random
-        self.debug_with_randomSegNoise = ope.debug_with_randomSegNoise
+        self.debug_with_randomSegNoise = opt.debug_with_randomSegNoise
 
         self.ref_start = opt.ref_val_start
         self.ref_end = opt.ref_val_end

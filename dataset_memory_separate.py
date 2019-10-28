@@ -98,6 +98,7 @@ class TrainDataset(BaseDataset):
         self.ref_start = ref_start
         self.ref_end = ref_end
 
+        self.random_pick = opt.random_pick
         self.no_align = opt.no_align
         self.zero_input_rgb = opt.zero_input_rgb
         self.zero_input_seg = opt.zero_input_seg
@@ -243,7 +244,12 @@ class TrainDataset(BaseDataset):
 
             # prepare the references
             this_ref_list = ref_lists[i]
-            for k in range(self.ref_end - self.ref_start):
+
+            ref_perm = np.random.permutation(self.ref_end - self.ref_start)
+
+            #for k in range(self.ref_end - self.ref_start):
+            for idx in range(self.random_pick):
+                k = ref_perm[idx]
                 if self.no_align:
                     ref_record1 = self.list_sample_orig[this_ref_list[k+self.ref_start]]
                     ref_record2 = self.list_sample_orig[this_ref_list[k+self.ref_start+10]]

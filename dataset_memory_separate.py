@@ -190,14 +190,14 @@ class TrainDataset(BaseDataset):
             batch_width // self.segm_downsampling_rate).long()
 
         batch_refs_rgb = torch.zeros(
-            self.batch_per_gpu, 3, self.ref_end-self.ref_start, batch_height, batch_width)
+            self.batch_per_gpu, 3, self.random_pick, batch_height, batch_width)
 
         if self.RGB_mask_combine_val:
             batch_refs_mask = torch.zeros(
-                self.batch_per_gpu, 3+1+self.num_class, self.ref_end-self.ref_start, batch_height, batch_width)
+                self.batch_per_gpu, 3+1+self.num_class, self.random_pick, batch_height, batch_width)
         else:
             batch_refs_mask = torch.zeros(
-                self.batch_per_gpu, 1+self.num_class, self.ref_end-self.ref_start, batch_height, batch_width)
+                self.batch_per_gpu, 1+self.num_class, self.random_pick, batch_height, batch_width)
 
         for i in range(self.batch_per_gpu):
             this_record = batch_records[i]
@@ -276,26 +276,26 @@ class TrainDataset(BaseDataset):
                 img = self.img_transform(img)
                 segm = self.segm_one_hot(segm)
 
-                batch_refs_rgb[i][:, k, :img.shape[1], :img.shape[2]] = img
+                batch_refs_rgb[i][:, idx, :img.shape[1], :img.shape[2]] = img
                 if self.RGB_mask_combine_val:
-                    batch_refs_mask[i][0:3, k, :segm.shape[1], :segm.shape[2]] = img
-                    batch_refs_mask[i][3:, k, :segm.shape[1], :segm.shape[2]] = segm
+                    batch_refs_mask[i][0:3, idx, :segm.shape[1], :segm.shape[2]] = img
+                    batch_refs_mask[i][3:, idx, :segm.shape[1], :segm.shape[2]] = segm
                 else:
-                    batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = segm
+                    batch_refs_mask[i][:, idx, :segm.shape[1], :segm.shape[2]] = segm
 
                 if self.zero_input_rgb:
-                    batch_refs_rgb[i][:, k, :img.shape[1], :img.shape[2]] = 0.
+                    batch_refs_rgb[i][:, idx, :img.shape[1], :img.shape[2]] = 0.
 
                 if self.zero_input_seg:
                     if self.RGB_mask_combine_val:
-                        batch_refs_mask[i][3:, k, :segm.shape[1], :segm.shape[2]] = 0.
+                        batch_refs_mask[i][3:, idx, :segm.shape[1], :segm.shape[2]] = 0.
                     else:
-                        batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = 0.
+                        batch_refs_mask[i][:, idx, :segm.shape[1], :segm.shape[2]] = 0.
                 elif self.random_input_seg:
                     if self.RGB_mask_combine_val:
-                        batch_refs_mask[i][3:, k, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
+                        batch_refs_mask[i][3:, idx, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
                     else:
-                        batch_refs_mask[i][:, k, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
+                        batch_refs_mask[i][:, idx, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
 
         output = dict()
         output['img_data'] = batch_images
@@ -324,6 +324,7 @@ class ValDataset(BaseDataset):
         self.debug_with_translated_gt = opt.debug_with_translated_gt
         self.debug_with_random = opt.debug_with_random
         self.debug_with_double_random = opt.debug_with_double_random
+        self.debug_with_randomSegNoise = ope.debug_with_randomSegNoise
 
         self.ref_start = opt.ref_val_start
         self.ref_end = opt.ref_val_end

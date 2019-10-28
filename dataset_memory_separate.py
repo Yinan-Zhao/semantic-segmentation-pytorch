@@ -433,6 +433,8 @@ class ValDataset(BaseDataset):
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
                     batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_randomSegNoise:
+                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = torch.rand_like(segm_ref)
 
             batch_refs_rgb = torch.unsqueeze(batch_refs_rgb, 0)
             batch_refs_mask = torch.unsqueeze(batch_refs_mask, 0)

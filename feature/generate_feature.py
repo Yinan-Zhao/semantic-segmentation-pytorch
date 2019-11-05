@@ -45,11 +45,11 @@ class myResNet(nn.Module):
 
 # th architecture to use
 arch = 'resnet50'
-train_odgt = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/training.odgt'
-val_odgt = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/validation.odgt'
-data_root = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/data/'
-train_output = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/feature/feat_train.npy'
-val_output = '/mnt/lustre/zhaoyinan/semantic-segmentation-pytorch/feature/feat_val.npy'
+train_odgt = '/home/yz9244/semantic-segmentation-pytorch/data/training.odgt'
+val_odgt = '/home/yz9244/semantic-segmentation-pytorch/data/validation.odgt'
+data_root = '/home/yz9244/semantic-segmentation-pytorch/data/'
+train_output = '/home/yz9244/semantic-segmentation-pytorch/feature/feat_train.npy'
+val_output = '/home/yz9244/semantic-segmentation-pytorch/feature/feat_val.npy'
 # load the pre-trained weights
 model_file = '%s_places365.pth.tar' % arch
 

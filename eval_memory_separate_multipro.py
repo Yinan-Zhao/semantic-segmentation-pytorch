@@ -55,7 +55,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
             scores = torch.zeros(1, cfg.DATASET.num_class, segSize[0], segSize[1])
             scores = async_copy_to(scores, gpu_id)
 
-            for img, img_refs_rgb, img_refs_mask in zip(img_resized_list, img_ref_rgb_resized_list, img_ref_mask_resized_list):
+            for img, img_refs_rgb, img_refs_mask in zip(img_resized_list[0:1], img_ref_rgb_resized_list[0:1], img_ref_mask_resized_list[0:1]):
                 feed_dict = batch_data.copy()
                 feed_dict['img_data'] = img
                 feed_dict['img_refs_rgb'] = img_refs_rgb

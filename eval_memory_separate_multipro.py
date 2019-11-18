@@ -145,9 +145,12 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
 
 
 def main(cfg, gpus):
-    with open(cfg.DATASET.list_val, 'r') as f:
-        lines = f.readlines()
-        num_files = len(lines)
+    if cfg.eval_with_train:
+        num_files = 100
+    else:
+        with open(cfg.DATASET.list_val, 'r') as f:
+            lines = f.readlines()
+            num_files = len(lines)
 
     num_files_per_gpu = math.ceil(num_files / len(gpus))
 

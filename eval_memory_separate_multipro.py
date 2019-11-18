@@ -95,7 +95,6 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
             cfg.DATASET.list_train,
             cfg.DATASET,
             start_idx=start_idx, end_idx=end_idx)
-        dataset_val.num_sample = 100
     else:
         dataset_val = ValDataset(
             cfg.DATASET.root_dataset,

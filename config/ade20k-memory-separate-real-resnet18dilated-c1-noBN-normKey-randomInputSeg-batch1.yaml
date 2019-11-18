@@ -42,7 +42,7 @@ TRAIN:
   save_freq: 5
 
 VAL:
-  visualize: False
+  visualize: True
   checkpoint: "epoch_20.pth"
 
 TEST:

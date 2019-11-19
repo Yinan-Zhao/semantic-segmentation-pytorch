@@ -65,8 +65,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                 feed_dict = async_copy_to(feed_dict, gpu_id)
 
                 # forward pass
-                scores_tmp, acc_orig = segmentation_module(feed_dict, segSize=segSize)
-                print(acc_orig)
+                scores_tmp = segmentation_module(feed_dict, segSize=segSize)
                 #scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)
                 scores = scores_tmp
 

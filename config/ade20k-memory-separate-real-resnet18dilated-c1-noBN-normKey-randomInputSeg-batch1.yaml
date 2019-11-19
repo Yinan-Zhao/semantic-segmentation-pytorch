@@ -23,7 +23,6 @@ MODEL:
   fc_dim: 512
   memory_encoder_noBN: True
   normalize_key: True
-  random_memory_bias: True
 
 TRAIN:
   batch_size_per_gpu: 1

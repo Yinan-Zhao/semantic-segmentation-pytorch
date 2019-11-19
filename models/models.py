@@ -917,8 +917,8 @@ class C1(nn.Module):
         if self.use_softmax: # is True during inference
             x = nn.functional.interpolate(
                 x, size=segSize, mode='bilinear', align_corners=False)
-            #x = nn.functional.softmax(x, dim=1)
-            x = nn.functional.log_softmax(x, dim=1)
+            x = nn.functional.softmax(x, dim=1)
+            #x = nn.functional.log_softmax(x, dim=1)
         else:
             x = nn.functional.log_softmax(x, dim=1)
 

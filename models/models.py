@@ -335,7 +335,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)
 
-            return pred 
+            acc = self.pixel_acc(pred, feed_dict['seg_label'])
+
+            return pred,acc
 
 
 class ModelBuilder:

@@ -45,7 +45,8 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
     for batch_data in loader:
         # process data
         batch_data = batch_data[0]
-        seg_label = as_numpy(batch_data['seg_label'][0])
+        #seg_label = as_numpy(batch_data['seg_label'][0])
+        seg_label = batch_data['seg_label'][0]
         img_resized_list = batch_data['img_data']
         img_ref_rgb_resized_list = batch_data['img_refs_rgb']
         img_ref_mask_resized_list = batch_data['img_refs_mask']
@@ -81,6 +82,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
         print(pred.shape)
         seg_label = nn.functional.interpolate(torch.unsqueeze(seg_label,0), scale_factor=1./8, mode='nearest')
         seg_label = seg_label.squeeze(0)
+        seg_label = as_numpy(seg_label)
         #acc, pix = accuracy(pred, seg_label)
         acc, pix = accuracy(pred, seg_label)
         print(acc)

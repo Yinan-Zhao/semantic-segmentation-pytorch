@@ -158,7 +158,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -174,6 +174,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.zero_qval = zero_qval
         self.qval_qread_BN = qval_qread_BN
         self.normalize_key = normalize_key
+        self.p_scalar = p_scalar
         if qval_qread_BN:
             self.bn_val = BatchNorm2d(net_att_query.out_dim)
             self.bn_read = BatchNorm2d(net_att_memory.out_dim)
@@ -203,7 +204,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             p = torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
             #p = p / math.sqrt(Dk)
-            p = p*40.
+            p = p*self.p_scalar
             p = F.softmax(p, dim=0)
 
             read = torch.mm(mv_b, p) # dv, Nq

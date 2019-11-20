@@ -63,6 +63,7 @@ _C.MODEL.random_scale = 1.0
 _C.MODEL.memory_encoder_noBN = False
 _C.MODEL.qval_qread_BN = False
 _C.MODEL.normalize_key = False
+_C.MODEL.p_scalar = 40.0
 
 
 # -----------------------------------------------------------------------------

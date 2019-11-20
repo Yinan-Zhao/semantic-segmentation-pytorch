@@ -71,14 +71,14 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
 
             #_, pred = torch.max(scores, dim=1)
             _, pred = torch.max(nn.functional.interpolate(
-                scores, scale_factor=1./8, mode='bilinear', align_corners=False), dim=1)
+                scores, scale_factor=1./8, mode='bilinear'), dim=1)
             pred = as_numpy(pred.squeeze(0).cpu())
 
         # calculate accuracy and SEND THEM TO MASTER
         print('seg_label original shape')
         print(seg_label.shape)
         seg_label = nn.functional.interpolate(
-                seg_label, scale_factor=1./8, mode='nearest', align_corners=False)
+                seg_label, scale_factor=1./8, mode='nearest')
         #acc, pix = accuracy(pred, seg_label)
         acc, pix = accuracy(pred, seg_label)
         print(acc)

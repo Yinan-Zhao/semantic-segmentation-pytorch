@@ -73,6 +73,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
             _, pred = torch.max(scores, dim=1)
             #_, pred = torch.max(nn.functional.interpolate(scores, scale_factor=1./8, mode='bilinear'), dim=1)
             pred = as_numpy(pred.squeeze(0).cpu())
+            pred1 = pred
             pred = imresize(pred, size=1./8, interp='nearest')
 
         # calculate accuracy and SEND THEM TO MASTER
@@ -80,9 +81,11 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
         print(seg_label.shape)
         print('pred shape')
         print(pred.shape)
+        seg_label1 = seg_label
         seg_label = imresize(seg_label, size=1./8, interp='nearest')
         #acc, pix = accuracy(pred, seg_label)
-        acc, pix = accuracy(pred, seg_label)
+        #acc, pix = accuracy(pred, seg_label)
+        acc, pix = accuracy(pred1, seg_label1)
         print(acc)
         print(seg_label.shape)
         intersection, union = intersectionAndUnion(pred, seg_label, cfg.DATASET.num_class)

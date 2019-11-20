@@ -69,10 +69,15 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                 #scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)
                 scores = scores_tmp
 
-            _, pred = torch.max(scores, dim=1)
+            #_, pred = torch.max(scores, dim=1)
+            _, pred = torch.max(nn.functional.interpolate(
+                scores, scale_factor=1./8, mode='bilinear', align_corners=False), dim=1)
             pred = as_numpy(pred.squeeze(0).cpu())
 
         # calculate accuracy and SEND THEM TO MASTER
+        seg_label = nn.functional.interpolate(
+                seg_label, scale_factor=1./8, mode='nearest', align_corners=False)
+        #acc, pix = accuracy(pred, seg_label)
         acc, pix = accuracy(pred, seg_label)
         print(acc)
         intersection, union = intersectionAndUnion(pred, seg_label, cfg.DATASET.num_class)

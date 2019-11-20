@@ -26,7 +26,7 @@ MODEL:
 TRAIN:
   batch_size_per_gpu: 1
   num_epoch: 20
-  start_epoch: 0
+  start_epoch: 10
   epoch_iters: 5000
   optim: "SGD"
   lr_encoder: 0.02
@@ -43,10 +43,10 @@ TRAIN:
 
 VAL:
   visualize: False
-  checkpoint: "epoch_20.pth"
+  checkpoint: "epoch_10.pth"
 
 TEST:
-  checkpoint: "epoch_20.pth"
+  checkpoint: "epoch_10.pth"
   result: "./"
 
 DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-noBN-normKey-pScalar4e2-batch1"

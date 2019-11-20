@@ -70,10 +70,10 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                 #scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)
                 scores = scores_tmp
 
-            #_, pred = torch.max(scores, dim=1)
-            _, pred = torch.max(nn.functional.interpolate(
-                scores, scale_factor=1./8, mode='bilinear'), dim=1)
+            _, pred = torch.max(scores, dim=1)
+            #_, pred = torch.max(nn.functional.interpolate(scores, scale_factor=1./8, mode='bilinear'), dim=1)
             pred = as_numpy(pred.squeeze(0).cpu())
+            pred = imresize(pred, size=1./8, interp='nearest')
 
         # calculate accuracy and SEND THEM TO MASTER
         print('seg_label original shape')

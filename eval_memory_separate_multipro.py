@@ -75,11 +75,15 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
             pred = as_numpy(pred.squeeze(0).cpu())
 
         # calculate accuracy and SEND THEM TO MASTER
+        print('seg_label original shape')
+        print(seg_label.shape)
         seg_label = nn.functional.interpolate(
                 seg_label, scale_factor=1./8, mode='nearest', align_corners=False)
         #acc, pix = accuracy(pred, seg_label)
         acc, pix = accuracy(pred, seg_label)
         print(acc)
+        print(seg_label.shape)
+        print(pred.shape)
         intersection, union = intersectionAndUnion(pred, seg_label, cfg.DATASET.num_class)
         result_queue.put_nowait((acc, pix, intersection, union))
 

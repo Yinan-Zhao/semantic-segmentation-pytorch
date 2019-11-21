@@ -51,7 +51,7 @@ def train(segmentation_module, iterator, optimizers, history, epoch, cfg):
         # measure elapsed time
         batch_time.update(time.time() - tic)
         tic = time.time()
-        np.save('debug/info_%03d.npy'%(i), batch_data['info'])
+        #np.save('debug/info_%03d.npy'%(i), batch_data['info'])
         np.save('debug/qread_%03d.npy'%(i), qread_all[i])
         np.save('debug/qval_%03d.npy'%(i), qval_all[i])
         np.save('debug/qk_b_%03d.npy'%(i), qk_b.detach().cpu().float().numpy())
@@ -219,9 +219,9 @@ def main(cfg, gpus):
         batch_size=len(gpus),  # we have modified data_parallel
         shuffle=False,  # we do not use this param
         collate_fn=user_scattered_collate,
-        num_workers=cfg.TRAIN.workers,
-        drop_last=True,
-        pin_memory=True)
+        num_workers=cfg.TRAIN.workers,)
+        #drop_last=True,
+        #pin_memory=True)
     print('1 Epoch = {} iters'.format(cfg.TRAIN.epoch_iters))
 
     # create loader iterator

@@ -203,7 +203,7 @@ class TrainDataset(BaseDataset):
 
         for i in range(self.batch_per_gpu):
             info_single = {}
-            info_single['ref_path_img'] = []
+            info_single['ref_path'] = []
 
             this_record = batch_records[i]
 
@@ -267,7 +267,7 @@ class TrainDataset(BaseDataset):
                     image_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
                     segm_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])
 
-                info_single['ref_path_img'].append((image_path, segm_path))
+                info_single['ref_path'].append((image_path, segm_path))
 
                 img = Image.open(image_path).convert('RGB')
                 segm = Image.open(segm_path)

@@ -199,12 +199,19 @@ class TrainDataset(BaseDataset):
             batch_refs_mask = torch.zeros(
                 self.batch_per_gpu, 1+self.num_class, self.random_pick, batch_height, batch_width)
 
+        infos = []
+
         for i in range(self.batch_per_gpu):
+            info_single = {}
+            info_single['ref_path_img'] = []
+
             this_record = batch_records[i]
 
             # load image and label
             image_path = os.path.join(self.root_dataset, this_record['fpath_img'])
             segm_path = os.path.join(self.root_dataset, this_record['fpath_segm'])
+
+            info_single['query_path'] = (image_path, segm_path)
 
             img = Image.open(image_path).convert('RGB')
             segm = Image.open(segm_path)
@@ -260,6 +267,8 @@ class TrainDataset(BaseDataset):
                     image_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
                     segm_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])
 
+                info_single['ref_path_img'].append((image_path, segm_path))
+
                 img = Image.open(image_path).convert('RGB')
                 segm = Image.open(segm_path)
                 assert(segm.mode == "L")
@@ -297,7 +306,10 @@ class TrainDataset(BaseDataset):
                     else:
                         batch_refs_mask[i][:, idx, :segm.shape[1], :segm.shape[2]] = torch.rand_like(segm)
 
+            infos.append(info_single)
+
         output = dict()
+        output['info'] = infos
         output['img_data'] = batch_images
         output['seg_label'] = batch_segms
         output['img_refs_rgb'] = batch_refs_rgb

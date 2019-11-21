@@ -219,9 +219,9 @@ def main(cfg, gpus):
         batch_size=len(gpus),  # we have modified data_parallel
         shuffle=False,  # we do not use this param
         collate_fn=user_scattered_collate,
-        num_workers=cfg.TRAIN.workers,)
-        #drop_last=True,
-        #pin_memory=True)
+        num_workers=cfg.TRAIN.workers,
+        drop_last=True,
+        pin_memory=True)
     print('1 Epoch = {} iters'.format(cfg.TRAIN.epoch_iters))
 
     # create loader iterator
@@ -234,11 +234,11 @@ def main(cfg, gpus):
             device_ids=gpus)
         # For sync bn
         patch_replication_callback(segmentation_module)'''
-    segmentation_module = UserScatteredDataParallel(
+    '''segmentation_module = UserScatteredDataParallel(
         segmentation_module,
         device_ids=gpus)
     # For sync bn
-    patch_replication_callback(segmentation_module)
+    patch_replication_callback(segmentation_module)'''
     segmentation_module.cuda()
 
     # Set up optimizers

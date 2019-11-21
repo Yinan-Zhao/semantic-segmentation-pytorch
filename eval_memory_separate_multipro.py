@@ -57,7 +57,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
             scores = async_copy_to(scores, gpu_id)
 
             if cfg.is_debug:
-                zip_list = zip(img_resized_list[-1], img_ref_rgb_resized_list[-1], img_ref_mask_resized_list[-1])
+                zip_list = zip(img_resized_list[-2:-1], img_ref_rgb_resized_list[-2:-1], img_ref_mask_resized_list[-2:-1])
             else:
                 zip_list = zip(img_resized_list, img_ref_rgb_resized_list, img_ref_mask_resized_list)
 

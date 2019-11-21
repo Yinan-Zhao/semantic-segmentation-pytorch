@@ -337,7 +337,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)
 
-            return pred
+            if self.debug:
+                return pred, qread, qval, qk_b, mk_b, mv_b, p
+            else:
+                return pred
 
 
 class ModelBuilder:

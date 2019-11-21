@@ -309,7 +309,6 @@ class TrainDataset(BaseDataset):
             #infos.append(info_single)
 
         output = dict()
-        output['info'] = this_record['fpath_img']
         output['img_data'] = batch_images
         output['seg_label'] = batch_segms
         output['img_refs_rgb'] = batch_refs_rgb

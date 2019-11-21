@@ -56,7 +56,12 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
             scores = torch.zeros(1, cfg.DATASET.num_class, segSize[0], segSize[1])
             scores = async_copy_to(scores, gpu_id)
 
-            for img, img_refs_rgb, img_refs_mask in zip(img_resized_list, img_ref_rgb_resized_list, img_ref_mask_resized_list):
+            if cfg.is_debug:
+                zip_list = zip(img_resized_list[-1], img_ref_rgb_resized_list[-1], img_ref_mask_resized_list[-1])
+            else:
+                zip_list = zip(img_resized_list, img_ref_rgb_resized_list, img_ref_mask_resized_list)
+
+            for img, img_refs_rgb, img_refs_mask in zip_list:
                 feed_dict = batch_data.copy()
                 feed_dict['img_data'] = img
                 feed_dict['img_refs_rgb'] = img_refs_rgb
@@ -66,7 +71,17 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                 feed_dict = async_copy_to(feed_dict, gpu_id)
 
                 # forward pass
-                scores_tmp = segmentation_module(feed_dict, segSize=segSize)
+                if cfg.is_debug:
+                    scores_tmp, qread, qval, qk_b, mk_b, mv_b, p = segmentation_module(feed_dict, segSize=segSize)
+                    np.save('debug/qread_%03d.npy'%(i), qread.detach().cpu().float().numpy())
+                    np.save('debug/qval_%03d.npy'%(i), qval.detach().cpu().float().numpy())
+                    np.save('debug/qk_b_%03d.npy'%(i), qk_b.detach().cpu().float().numpy())
+                    np.save('debug/mk_b_%03d.npy'%(i), mk_b.detach().cpu().float().numpy())
+                    np.save('debug/mv_b_%03d.npy'%(i), mv_b.detach().cpu().float().numpy())
+                    np.save('debug/p_%03d.npy'%(i), p.detach().cpu().float().numpy())
+                    print(feed_dict['info'])
+                else:
+                    scores_tmp = segmentation_module(feed_dict, segSize=segSize)
                 scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)
                 #scores = scores_tmp
 
@@ -146,7 +161,7 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
 
     crit = nn.NLLLoss(ignore_index=-1)
 
-    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar)
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, debug=cfg.is_debug)
 
     segmentation_module.cuda()
 
@@ -267,6 +282,11 @@ if __name__ == '__main__':
         action='store_true',
         help="zero qval",
     )
+    parser.add_argument(
+        "--is_debug",
+        action='store_true',
+        help="store intermediate results, such as probability",
+    )
     args = parser.parse_args()
 
     cfg.merge_from_file(args.cfg)
@@ -278,6 +298,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.zero_qval = args.zero_qval
     cfg.eval_with_train = args.eval_with_train
+    cfg.is_debug = args.is_debug
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

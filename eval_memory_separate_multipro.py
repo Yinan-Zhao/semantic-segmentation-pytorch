@@ -79,7 +79,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                     np.save('debug/mk_b_%03d.npy'%(i), mk_b.detach().cpu().float().numpy())
                     np.save('debug/mv_b_%03d.npy'%(i), mv_b.detach().cpu().float().numpy())
                     np.save('debug/p_%03d.npy'%(i), p.detach().cpu().float().numpy())
-                    print(feed_dict['info'])
+                    print(batch_data['info'])
                 else:
                     scores_tmp = segmentation_module(feed_dict, segSize=segSize)
                 scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)

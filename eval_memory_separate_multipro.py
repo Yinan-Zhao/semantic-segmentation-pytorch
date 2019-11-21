@@ -43,7 +43,7 @@ def visualize_result(data, pred, dir_result):
 def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
     segmentation_module.eval()
 
-    for batch_data in loader:
+    for i, batch_data in enumerate(loader):
         # process data
         batch_data = batch_data[0]
         seg_label = as_numpy(batch_data['seg_label'][0])

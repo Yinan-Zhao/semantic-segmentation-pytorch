@@ -263,6 +263,11 @@ if __name__ == '__main__':
         help="put gt in the memory",
     )
     parser.add_argument(
+        "--debug_with_double_complete_random",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
         "--debug_with_translated_gt",
         action='store_true',
         help="put gt in the memory",
@@ -300,6 +305,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_random = args.debug_with_random
     cfg.DATASET.debug_with_translated_gt = args.debug_with_translated_gt
     cfg.DATASET.debug_with_double_random = args.debug_with_double_random
+    cfg.DATASET.debug_with_double_complete_random = args.debug_with_double_complete_random
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.zero_qval = args.zero_qval
     cfg.eval_with_train = args.eval_with_train

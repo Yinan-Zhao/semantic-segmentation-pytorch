@@ -287,6 +287,11 @@ if __name__ == '__main__':
         action='store_true',
         help="store intermediate results, such as probability",
     )
+    parser.add_argument(
+        "--eval_from_scratch",
+        action='store_true',
+        help="store intermediate results, such as probability",
+    )
     args = parser.parse_args()
 
     cfg.merge_from_file(args.cfg)
@@ -306,19 +311,20 @@ if __name__ == '__main__':
     logger.info("Running with config:\n{}".format(cfg))
 
     # absolute paths of model weights
-    cfg.MODEL.weights_enc_query = os.path.join(
-        cfg.DIR, 'enc_query_' + cfg.VAL.checkpoint)
-    cfg.MODEL.weights_enc_memory = os.path.join(
-        cfg.DIR, 'enc_memory_' + cfg.VAL.checkpoint)
-    cfg.MODEL.weights_att_query = os.path.join(
-        cfg.DIR, 'att_query_' + cfg.VAL.checkpoint)
-    cfg.MODEL.weights_att_memory = os.path.join(
-        cfg.DIR, 'att_memory_' + cfg.VAL.checkpoint)
-    cfg.MODEL.weights_decoder = os.path.join(
-        cfg.DIR, 'decoder_' + cfg.VAL.checkpoint)
-    assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) and \
-            os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) and \
-            os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"
+    if not args.eval_from_scratch:
+        cfg.MODEL.weights_enc_query = os.path.join(
+            cfg.DIR, 'enc_query_' + cfg.VAL.checkpoint)
+        cfg.MODEL.weights_enc_memory = os.path.join(
+            cfg.DIR, 'enc_memory_' + cfg.VAL.checkpoint)
+        cfg.MODEL.weights_att_query = os.path.join(
+            cfg.DIR, 'att_query_' + cfg.VAL.checkpoint)
+        cfg.MODEL.weights_att_memory = os.path.join(
+            cfg.DIR, 'att_memory_' + cfg.VAL.checkpoint)
+        cfg.MODEL.weights_decoder = os.path.join(
+            cfg.DIR, 'decoder_' + cfg.VAL.checkpoint)
+        assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) and \
+                os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) and \
+                os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"
 
     if not os.path.isdir(os.path.join(cfg.DIR, "result")):
         os.makedirs(os.path.join(cfg.DIR, "result"))

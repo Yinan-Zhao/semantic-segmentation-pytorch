@@ -440,7 +440,7 @@ class ValDataset(BaseDataset):
                     segm_ref = self.segm_one_hot(segm_ref)
                     batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
                 elif self.debug_with_double_random:
-                    ref_record_tmp = self.train_list_sample[this_ref_list[k+1000+self.ref_start]]
+                    ref_record_tmp = self.train_list_sample[this_ref_list[k+100+self.ref_start]]
                     segm_ref = Image.open(os.path.join(self.root_dataset, ref_record_tmp['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)

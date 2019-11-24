@@ -12,8 +12,8 @@ DATASET:
   ref_val_path: "./data/ref_real_val.txt"
   ref_start: 1
   ref_end: 11
-  ref_val_start: 1
-  ref_val_end: 2
+  ref_val_start: 100
+  ref_val_end: 101
   random_pick: 1
 
 MODEL:

@@ -61,6 +61,7 @@ _C.MODEL.random_memory_bias = False
 _C.MODEL.random_memory_nobias = False
 _C.MODEL.random_scale = 1.0
 _C.MODEL.memory_encoder_noBN = False
+_C.MODEL.memory_encoder_arch = ""
 _C.MODEL.qval_qread_BN = False
 _C.MODEL.normalize_key = False
 _C.MODEL.p_scalar = 40.0

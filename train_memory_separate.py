@@ -179,21 +179,32 @@ def main(cfg, gpus):
         arch=cfg.MODEL.arch_encoder.lower(),
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_enc_query)
-    if cfg.MODEL.memory_encoder_noBN:
+    if cfg.MODEL.memory_encoder_arch:
         net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
-            fc_dim=cfg.MODEL.fc_dim,
-            weights=cfg.MODEL.weights_enc_memory,
-            num_class=cfg.DATASET.num_class,
-            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val)
-    else:
-        net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.arch_encoder.lower(),
+            arch=cfg.MODEL.memory_encoder_arch.lower(),
             fc_dim=cfg.MODEL.fc_dim,
             weights=cfg.MODEL.weights_enc_memory,
             num_class=cfg.DATASET.num_class,
             RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-            pretrained=cfg.memory_enc_pretrained)
+            segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
+    else:
+        if cfg.MODEL.memory_encoder_noBN:
+            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+                arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
+                fc_dim=cfg.MODEL.fc_dim,
+                weights=cfg.MODEL.weights_enc_memory,
+                num_class=cfg.DATASET.num_class,
+                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate,)
+        else:
+            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+                arch=cfg.MODEL.arch_encoder.lower(),
+                fc_dim=cfg.MODEL.fc_dim,
+                weights=cfg.MODEL.weights_enc_memory,
+                num_class=cfg.DATASET.num_class,
+                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate,
+                pretrained=cfg.memory_enc_pretrained)
     net_att_query = ModelBuilder.build_encoder(
         arch='attention',
         fc_dim=cfg.MODEL.fc_dim,

@@ -375,7 +375,7 @@ class ModelBuilder:
         return net_encoder
 
     @staticmethod
-    def build_encoder_memory_separate(arch='resnet50dilated', fc_dim=512, weights='', num_class=150, RGB_mask_combine_val=False, pretrained=True):
+    def build_encoder_memory_separate(arch='resnet50dilated', fc_dim=512, weights='', num_class=150, RGB_mask_combine_val=False, segm_downsampling_rate=8, pretrained=True):
         arch = arch.lower()
         if arch == 'resnet18dilated':
             orig_resnet = resnet.__dict__['resnet18'](pretrained=pretrained)
@@ -383,6 +383,8 @@ class ModelBuilder:
         elif arch == 'resnet18dilated_nobn':
             orig_resnet = resnet.__dict__['resnet18_noBN']()
             net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
+        elif arch == 'c1':
+            net_encoder = C1_Encoder_Memory(num_class=num_class, fc_dim=fc_dim, segm_downsampling_rate=segm_downsampling_rate, RGB_mask_combine_val=RGB_mask_combine_val)
         else:
             print(arch)
             raise Exception('Architecture undefined!')
@@ -505,6 +507,14 @@ def conv3x3_bn_relu(in_planes, out_planes, stride=1):
             nn.Conv2d(in_planes, out_planes, kernel_size=3,
                       stride=stride, padding=1, bias=False),
             BatchNorm2d(out_planes),
+            nn.ReLU(inplace=True),
+            )
+
+def conv3x3_relu(in_planes, out_planes, stride=1):
+    "3x3 convolution + BN + relu"
+    return nn.Sequential(
+            nn.Conv2d(in_planes, out_planes, kernel_size=3,
+                      stride=stride, padding=1, bias=False),
             nn.ReLU(inplace=True),
             )
 
@@ -812,6 +822,26 @@ class ResnetDilated_Memory_Separate_noBN(nn.Module):
             return conv_out
         return [x]
 
+class C1_Encoder_Memory(nn.Module):
+    def __init__(self, num_class=150, fc_dim=2048, segm_downsampling_rate=8, RGB_mask_combine_val=False):
+        super(C1_Encoder_Memory, self).__init__()
+        if RGB_mask_combine_val:
+            self.cbr = conv3x3_relu(3+1+num_class, fc_dim, 1)
+        else:
+            self.cbr = conv3x3_relu(1+num_class, fc_dim, 1)
+        self.segm_downsampling_rate = segm_downsampling_rate
+
+    def forward(self, x, return_feature_maps=False):
+        x_downsample = nn.functional.interpolate(x, 
+            size=(x.shape[-2]//self.segm_downsampling_rate, x.shape[-1]//self.segm_downsampling_rate), 
+            mode='nearest', 
+            align_corners=False)
+        x = self.cbr(x_downsample)
+        if return_feature_maps:
+            return [x]
+        else:
+            return x
+
 class MobileNetV2Dilated(nn.Module):
     def __init__(self, orig_net, dilate_scale=8):
         super(MobileNetV2Dilated, self).__init__()
@@ -928,6 +958,7 @@ class C1(nn.Module):
             x = nn.functional.log_softmax(x, dim=1)
 
         return x
+
 
 class AttModule(nn.Module):
     def __init__(self, fc_dim=2048):

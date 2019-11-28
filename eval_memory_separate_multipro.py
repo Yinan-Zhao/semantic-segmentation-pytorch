@@ -132,20 +132,31 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
         arch=cfg.MODEL.arch_encoder.lower(),
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_enc_query)
-    if cfg.MODEL.memory_encoder_noBN:
+    if cfg.MODEL.memory_encoder_arch:
         net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
+            arch=cfg.MODEL.memory_encoder_arch.lower(),
             fc_dim=cfg.MODEL.fc_dim,
             weights=cfg.MODEL.weights_enc_memory,
             num_class=cfg.DATASET.num_class,
-            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val)
+            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+            segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
     else:
-        net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.arch_encoder.lower(),
-            fc_dim=cfg.MODEL.fc_dim,
-            weights=cfg.MODEL.weights_enc_memory,
-            num_class=cfg.DATASET.num_class,
-            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val)
+        if cfg.MODEL.memory_encoder_noBN:
+            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+                arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
+                fc_dim=cfg.MODEL.fc_dim,
+                weights=cfg.MODEL.weights_enc_memory,
+                num_class=cfg.DATASET.num_class,
+                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
+        else:
+            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+                arch=cfg.MODEL.arch_encoder.lower(),
+                fc_dim=cfg.MODEL.fc_dim,
+                weights=cfg.MODEL.weights_enc_memory,
+                num_class=cfg.DATASET.num_class,
+                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
     net_att_query = ModelBuilder.build_encoder(
         arch='attention',
         fc_dim=cfg.MODEL.fc_dim,

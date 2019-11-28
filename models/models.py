@@ -297,7 +297,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             acc = self.pixel_acc(pred, feed_dict['seg_label'])
             if self.debug:
-                return loss, acc, qread, qval, qk_b, mk_b, mv_b, p
+                return loss, acc, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory
             else:
                 return loss, acc
         # inference
@@ -338,7 +338,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             pred = self.decoder([feature], segSize=segSize)
 
             if self.debug:
-                return pred, qread, qval, qk_b, mk_b, mv_b, p
+                return pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory
             else:
                 return pred
 

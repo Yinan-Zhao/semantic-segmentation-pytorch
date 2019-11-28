@@ -206,7 +206,8 @@ def main(cfg, gpus):
         train(segmentation_module, iterator_train, optimizers, history, epoch+1, cfg)
 
         # checkpointing
-        checkpoint(nets, history, cfg, epoch+1)
+        if (epoch+1) % cfg.TRAIN.save_freq == 0:
+            checkpoint(nets, history, cfg, epoch+1)
 
     print('Training Done!')
 

@@ -834,8 +834,7 @@ class C1_Encoder_Memory(nn.Module):
     def forward(self, x, return_feature_maps=False):
         x_downsample = nn.functional.interpolate(x, 
             size=(x.shape[-2]//self.segm_downsampling_rate, x.shape[-1]//self.segm_downsampling_rate), 
-            mode='nearest', 
-            align_corners=False)
+            mode='nearest')
         x = self.cbr(x_downsample)
         if return_feature_maps:
             return [x]

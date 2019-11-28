@@ -195,7 +195,7 @@ def main(cfg, gpus):
                 weights=cfg.MODEL.weights_enc_memory,
                 num_class=cfg.DATASET.num_class,
                 RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate,)
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
         else:
             net_enc_memory = ModelBuilder.build_encoder_memory_separate(
                 arch=cfg.MODEL.arch_encoder.lower(),

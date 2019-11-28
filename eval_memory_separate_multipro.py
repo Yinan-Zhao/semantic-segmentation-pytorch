@@ -72,13 +72,15 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
 
                 # forward pass
                 if cfg.is_debug:
-                    scores_tmp, qread, qval, qk_b, mk_b, mv_b, p = segmentation_module(feed_dict, segSize=segSize)
+                    scores_tmp, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=segSize)
                     np.save('debug/qread_%03d.npy'%(i), qread.detach().cpu().float().numpy())
                     np.save('debug/qval_%03d.npy'%(i), qval.detach().cpu().float().numpy())
                     np.save('debug/qk_b_%03d.npy'%(i), qk_b.detach().cpu().float().numpy())
                     np.save('debug/mk_b_%03d.npy'%(i), mk_b.detach().cpu().float().numpy())
                     np.save('debug/mv_b_%03d.npy'%(i), mv_b.detach().cpu().float().numpy())
                     np.save('debug/p_%03d.npy'%(i), p.detach().cpu().float().numpy())
+                    np.save('debug/feature_enc_%03d.npy'%(i), feature_enc.detach().cpu().float().numpy())
+                    np.save('debug/feature_memory_%03d.npy'%(i), feature_memory.detach().cpu().float().numpy())
                     print(batch_data['info'])
                 else:
                     scores_tmp = segmentation_module(feed_dict, segSize=segSize)

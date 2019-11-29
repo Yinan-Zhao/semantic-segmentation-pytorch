@@ -268,8 +268,35 @@ class ValDataset(BaseDataset):
         super(ValDataset, self).__init__(odgt, opt, **kwargs)
         self.root_dataset = root_dataset
 
+        self.train_list_sample = [json.loads(x.rstrip()) for x in open(opt.list_train, 'r')]
+
+        self.train_num_sample = len(self.train_list_sample)
+        assert self.train_num_sample > 0
+        print('# training samples: {}'.format(self.train_num_sample))
+
+        self.debug_with_gt = opt.debug_with_gt
+        self.debug_with_translated_gt = opt.debug_with_translated_gt
+        self.debug_with_random = opt.debug_with_random
+        self.debug_with_double_random = opt.debug_with_double_random
+        self.debug_with_double_complete_random = opt.debug_with_double_complete_random
+        self.debug_with_randomSegNoise = opt.debug_with_randomSegNoise
+
+        self.ref_start = opt.ref_val_start
+        self.ref_end = opt.ref_val_end
+
+        with open(opt.ref_val_path, 'r') as f:
+            lines = f.readlines()
+        self.ref_list = [[int(item) for item in line.strip().split()] for line in lines]
+
+        start_idx = kwargs['start_idx']
+        end_idx = kwargs['end_idx']
+        if start_idx >= 0 and end_idx >= 0:     # divide file list
+            self.ref_list = self.ref_list[start_idx:end_idx]
+        assert len(self.ref_list) == len(self.list_sample)
+
     def __getitem__(self, index):
         this_record = self.list_sample[index]
+        this_ref_list = self.ref_list[index]
         # load image and label
         image_path = os.path.join(self.root_dataset, this_record['fpath_img'])
         segm_path = os.path.join(self.root_dataset, this_record['fpath_segm'])
@@ -279,9 +306,14 @@ class ValDataset(BaseDataset):
         assert(img.size[0] == segm.size[0])
         assert(img.size[1] == segm.size[1])
 
+        # segm transform, to torch long tensor HxW
+        segm = self.segm_transform(segm)
+        batch_segms = torch.unsqueeze(segm, 0)
+
         ori_width, ori_height = img.size
 
         img_resized_list = []
+        ref_resized_list = []
         for this_short_size in self.imgSizes:
             # calculate target height and width
             scale = min(this_short_size / float(min(ori_height, ori_width)),
@@ -300,14 +332,78 @@ class ValDataset(BaseDataset):
             img_resized = torch.unsqueeze(img_resized, 0)
             img_resized_list.append(img_resized)
 
-        # segm transform, to torch long tensor HxW
-        segm = self.segm_transform(segm)
-        batch_segms = torch.unsqueeze(segm, 0)
+            batch_refs = torch.zeros(
+                3+1+self.num_class, self.ref_end-self.ref_start, target_height, target_width)
+
+            for k in range(self.ref_end - self.ref_start):
+                ref_record = self.train_list_sample[this_ref_list[k+self.ref_start]]
+                image_ref_path = os.path.join(self.root_dataset, ref_record['fpath_img'])
+                segm_ref_path = os.path.join(self.root_dataset, ref_record['fpath_segm'])
+
+                img_ref = Image.open(image_ref_path).convert('RGB')
+                segm_ref = Image.open(segm_ref_path)
+                assert(segm_ref.mode == "L")
+                assert(img_ref.size[0] == segm_ref.size[0])
+                assert(img_ref.size[1] == segm_ref.size[1])
+
+                img_ref = imresize(img_ref, (target_width, target_height), interp='bilinear')
+                segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+
+                img_ref = self.img_transform(img_ref)
+                segm_ref = self.segm_one_hot(segm_ref)
+
+                batch_refs[0:3, k, :img_ref.shape[1], :img_ref.shape[2]] = img_ref
+                batch_refs[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+
+                if self.debug_with_gt:
+                    img_resized_gt = img_resized[0]
+                    batch_refs[0:3, k, :img_resized_gt.shape[1], :img_resized_gt.shape[2]] = img_resized_gt
+                    
+                    segm_ref = Image.open(os.path.join(self.root_dataset, this_record['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_translated_gt:
+                    img_resized_gt = img_resized[0]
+                    translation = 20
+                    batch_refs[0:3, k, translation:img_resized_gt.shape[1], translation:img_resized_gt.shape[2]] = img_resized_gt[:,:img_resized_gt.shape[1]-translation, :img_resized_gt.shape[2]-translation]
+                    
+                    segm_ref = Image.open(os.path.join(self.root_dataset, this_record['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs[3:, k, translation:segm_ref.shape[1], translation:segm_ref.shape[2]] = segm_ref[:, :segm_ref.shape[1]-translation, :segm_ref.shape[2]-translation]
+                elif self.debug_with_random:
+                    img_resized_gt = img_resized[0]
+                    batch_refs[0:3, k, :img_resized_gt.shape[1], :img_resized_gt.shape[2]] = img_resized_gt
+                    
+                    segm_ref = Image.open(os.path.join(self.root_dataset, ref_record['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_double_random:
+                    ref_record_tmp = self.train_list_sample[this_ref_list[k+100+self.ref_start]]
+                    segm_ref = Image.open(os.path.join(self.root_dataset, ref_record_tmp['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_double_complete_random:
+                    ref_record_tmp = self.train_list_sample[np.random.randint(0, len(self.train_list_sample))]
+                    segm_ref = Image.open(os.path.join(self.root_dataset, ref_record_tmp['fpath_segm']))
+                    segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
+                    segm_ref = self.segm_one_hot(segm_ref)
+                    batch_refs[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                elif self.debug_with_randomSegNoise:
+                    batch_refs[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = torch.rand_like(segm_ref)
+
+            batch_refs = torch.unsqueeze(batch_refs, 0)
+            ref_resized_list.append(batch_refs)
+
 
         output = dict()
         output['img_ori'] = np.array(img)
         output['img_data'] = [x.contiguous() for x in img_resized_list]
         output['seg_label'] = batch_segms.contiguous()
+        output['img_refs'] = [x. contiguous() for x in ref_resized_list]
         output['info'] = this_record['fpath_img']
         return output
 

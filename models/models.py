@@ -51,7 +51,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, normalize_key=False, p_scalar=40.0):
         super(SegmentationAttentionModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -60,6 +60,8 @@ class SegmentationAttentionModule(SegmentationModuleBase):
         self.decoder = net_dec
         self.crit = crit
         self.deep_sup_scale = deep_sup_scale
+        self.normalize_key = normalize_key
+        self.p_scalar = p_scalar
 
     def maskRead(self, qkey, qval, qmask, mkey, mval, mmask):
         '''
@@ -83,7 +85,8 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             # print(mv_b.shape)
 
             p = torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
-            p = p / math.sqrt(Dk)
+            #p = p / math.sqrt(Dk)
+            p = p*self.p_scalar
             p = F.softmax(p, dim=0)
 
             read = torch.mm(mv_b, p) # dv, Nq
@@ -133,6 +136,9 @@ class SegmentationAttentionModule(SegmentationModuleBase):
                 mkey, mval = self.memoryAttention(self.attention_memory, feature_memory)
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
+                if self.normalize_key:
+                    qkey = F.normalize(qkey, p=2, dim=1)
+                    mkey = F.normalize(mkey, p=2, dim=1)
                 qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
                 feature = torch.cat((qval, qread), dim=1)
                 pred = self.decoder([feature])
@@ -152,6 +158,9 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             mkey, mval = self.memoryAttention(self.attention_memory, feature_memory)
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
+            if self.normalize_key:
+                qkey = F.normalize(qkey, p=2, dim=1)
+                mkey = F.normalize(mkey, p=2, dim=1)
             qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             feature = torch.cat((qval, qread), dim=1)
             pred = self.decoder([feature], segSize=segSize)

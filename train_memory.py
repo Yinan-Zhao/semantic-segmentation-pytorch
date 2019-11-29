@@ -203,10 +203,10 @@ def main(cfg, gpus):
 
     if cfg.MODEL.arch_decoder.endswith('deepsup'):
         segmentation_module = SegmentationAttentionModule(
-            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, cfg.TRAIN.deep_sup_scale)
+            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, cfg.TRAIN.deep_sup_scale, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar)
     else:
         segmentation_module = SegmentationAttentionModule(
-            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit)
+            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar)
 
     # Dataset and Loader
     dataset_train = TrainDataset(

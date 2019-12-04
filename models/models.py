@@ -167,7 +167,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -184,6 +184,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.qval_qread_BN = qval_qread_BN
         self.normalize_key = normalize_key
         self.p_scalar = p_scalar
+        self.memory_feature_aggregation = memory_feature_aggregation
+        self.memory_noLabel = memory_noLabel
         if qval_qread_BN:
             self.bn_val = BatchNorm2d(net_att_query.out_dim)
             self.bn_read = BatchNorm2d(net_att_memory.out_dim)
@@ -264,7 +266,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qkey, qval = self.attention_query(feature_enc)
                 
                 feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
-                mkey, _ = self.memoryAttention(self.attention_query, feature_memory)
+                mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
 
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
                 #np.save('debug/img_refs_mask.npy', feed_dict['img_refs_mask'].detach().cpu().float().numpy())
@@ -280,7 +282,16 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     qkey = F.normalize(qkey, p=2, dim=1)
                     mkey = F.normalize(mkey, p=2, dim=1)
 
-                qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                if self.memory_feature_aggregation:
+                    if self.memory_noLabel:
+                        mval = mval_rgb
+                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                    else:
+                        qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                        qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
+                        qread = torch.cat((qread_label, qread_rgb), dim=1)
+                else:
+                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
 
                 if self.qval_qread_BN:
                     qval = self.bn_val(qval)
@@ -315,7 +326,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             qkey, qval = self.attention_query(feature_enc)
             
             feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
-            mkey, _ = self.memoryAttention(self.attention_query, feature_memory)
+            mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
 
             mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
             _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
@@ -327,7 +338,16 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qkey = F.normalize(qkey, p=2, dim=1)
                 mkey = F.normalize(mkey, p=2, dim=1)
             
-            qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+            if self.memory_feature_aggregation:
+                if self.memory_noLabel:
+                    mval = mval_rgb
+                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                else:
+                    qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                    qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
+                    qread = torch.cat((qread_label, qread_rgb), dim=1)
+            else:
+                qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             
             if self.qval_qread_BN:
                 qval = self.bn_val(qval)

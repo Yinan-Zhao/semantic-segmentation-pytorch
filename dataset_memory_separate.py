@@ -331,6 +331,8 @@ class ValDataset(BaseDataset):
         assert self.train_num_sample > 0
         print('# training samples: {}'.format(self.train_num_sample))
 
+        self.RGB_mask_combine_val = opt.RGB_mask_combine_val
+
         self.debug_with_gt = opt.debug_with_gt
         self.debug_with_translated_gt = opt.debug_with_translated_gt
         self.debug_with_random = opt.debug_with_random
@@ -392,8 +394,12 @@ class ValDataset(BaseDataset):
 
             batch_refs_rgb = torch.zeros(
                 3, self.ref_end-self.ref_start, target_height, target_width)
-            batch_refs_mask = torch.zeros(
-                1+self.num_class, self.ref_end-self.ref_start, target_height, target_width)
+            if self.RGB_mask_combine_val:
+                batch_refs_mask = torch.zeros(
+                    3+1+self.num_class, self.ref_end-self.ref_start, target_height, target_width)
+            else:
+                batch_refs_mask = torch.zeros(
+                    1+self.num_class, self.ref_end-self.ref_start, target_height, target_width)
 
             for k in range(self.ref_end - self.ref_start):
                 ref_record = self.train_list_sample[this_ref_list[k+self.ref_start]]
@@ -413,7 +419,12 @@ class ValDataset(BaseDataset):
                 segm_ref = self.segm_one_hot(segm_ref)
 
                 batch_refs_rgb[:, k, :img_ref.shape[1], :img_ref.shape[2]] = img_ref
-                batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+
+                if self.RGB_mask_combine_val:
+                    batch_refs_mask[0:3, k, :segm_ref.shape[1], :segm_ref.shape[2]] = img_ref
+                    batch_refs_mask[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                else:
+                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
 
                 if self.debug_with_gt:
                     img_resized_gt = img_resized[0]
@@ -422,7 +433,10 @@ class ValDataset(BaseDataset):
                     segm_ref = Image.open(os.path.join(self.root_dataset, this_record['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
-                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    else:
+                        batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
                 elif self.debug_with_translated_gt:
                     img_resized_gt = img_resized[0]
                     translation = 20
@@ -431,7 +445,10 @@ class ValDataset(BaseDataset):
                     segm_ref = Image.open(os.path.join(self.root_dataset, this_record['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
-                    batch_refs_mask[:, k, translation:segm_ref.shape[1], translation:segm_ref.shape[2]] = segm_ref[:, :segm_ref.shape[1]-translation, :segm_ref.shape[2]-translation]
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[3:, k, translation:segm_ref.shape[1], translation:segm_ref.shape[2]] = segm_ref[:, :segm_ref.shape[1]-translation, :segm_ref.shape[2]-translation]
+                    else:
+                        batch_refs_mask[:, k, translation:segm_ref.shape[1], translation:segm_ref.shape[2]] = segm_ref[:, :segm_ref.shape[1]-translation, :segm_ref.shape[2]-translation]
                 elif self.debug_with_random:
                     img_resized_gt = img_resized[0]
                     batch_refs_rgb[:, k, :img_resized_gt.shape[1], :img_resized_gt.shape[2]] = img_resized_gt
@@ -439,21 +456,33 @@ class ValDataset(BaseDataset):
                     segm_ref = Image.open(os.path.join(self.root_dataset, ref_record['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
-                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    else:
+                        batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
                 elif self.debug_with_double_random:
                     ref_record_tmp = self.train_list_sample[this_ref_list[k+100+self.ref_start]]
                     segm_ref = Image.open(os.path.join(self.root_dataset, ref_record_tmp['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
-                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    else:
+                        batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
                 elif self.debug_with_double_complete_random:
                     ref_record_tmp = self.train_list_sample[np.random.randint(0, len(self.train_list_sample))]
                     segm_ref = Image.open(os.path.join(self.root_dataset, ref_record_tmp['fpath_segm']))
                     segm_ref = imresize(segm_ref, (target_width, target_height), interp='nearest')
                     segm_ref = self.segm_one_hot(segm_ref)
-                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
+                    else:
+                        batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = segm_ref
                 elif self.debug_with_randomSegNoise:
-                    batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = torch.rand_like(segm_ref)
+                    if self.RGB_mask_combine_val:
+                        batch_refs_mask[3:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = torch.rand_like(segm_ref)
+                    else:
+                        batch_refs_mask[:, k, :segm_ref.shape[1], :segm_ref.shape[2]] = torch.rand_like(segm_ref)
 
             batch_refs_rgb = torch.unsqueeze(batch_refs_rgb, 0)
             batch_refs_mask = torch.unsqueeze(batch_refs_mask, 0)

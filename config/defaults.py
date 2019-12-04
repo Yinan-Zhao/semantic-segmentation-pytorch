@@ -65,7 +65,8 @@ _C.MODEL.memory_encoder_arch = ""
 _C.MODEL.qval_qread_BN = False
 _C.MODEL.normalize_key = False
 _C.MODEL.p_scalar = 40.0
-
+_C.MODEL.memory_feature_aggregation = False
+_C.MODEL.memory_noLabel = False
 
 # -----------------------------------------------------------------------------
 # Training

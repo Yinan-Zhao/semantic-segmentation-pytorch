@@ -17,7 +17,7 @@ DATASET:
 
 MODEL:
   arch_encoder: "resnet18dilated"
-  arch_decoder: "c1"
+  arch_decoder: "c1_aggregation"
   fc_dim: 512
   memory_encoder_noBN: True
   normalize_key: True

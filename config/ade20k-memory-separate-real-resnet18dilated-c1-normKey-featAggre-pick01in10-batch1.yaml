@@ -11,9 +11,10 @@ DATASET:
   ref_path: "./data/ref_real_training.txt"
   ref_val_path: "./data/ref_real_val.txt"
   ref_start: 1
-  ref_end: 2
-  ref_val_start: 10
-  ref_val_end: 11
+  ref_end: 11
+  ref_val_start: 0
+  ref_val_end: 1
+  random_pick: 1
 
 MODEL:
   arch_encoder: "resnet18dilated"
@@ -49,4 +50,4 @@ TEST:
   checkpoint: "epoch_20.pth"
   result: "./"
 
-DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-normKey-featAggre-batch1"
+DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-normKey-featAggre-pick01in10-batch1"

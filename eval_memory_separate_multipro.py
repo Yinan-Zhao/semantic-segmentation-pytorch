@@ -174,7 +174,7 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
 
     crit = nn.NLLLoss(ignore_index=-1)
 
-    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug)
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug)
 
     segmentation_module.cuda()
 
@@ -296,11 +296,6 @@ if __name__ == '__main__':
         help="evaluate with the training set",
     )
     parser.add_argument(
-        "--zero_qval",
-        action='store_true',
-        help="zero qval",
-    )
-    parser.add_argument(
         "--is_debug",
         action='store_true',
         help="store intermediate results, such as probability",
@@ -320,7 +315,6 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_double_random = args.debug_with_double_random
     cfg.DATASET.debug_with_double_complete_random = args.debug_with_double_complete_random
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
-    cfg.zero_qval = args.zero_qval
     cfg.eval_with_train = args.eval_with_train
     cfg.is_debug = args.is_debug
     # cfg.freeze()

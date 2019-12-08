@@ -22,8 +22,7 @@ MODEL:
   fc_dim: 512
   memory_encoder_noBN: True
   normalize_key: True
-  memory_feature_aggregation: True
-  memory_noLabel: True
+  zero_qval: True
 
 TRAIN:
   batch_size_per_gpu: 1
@@ -51,4 +50,4 @@ TEST:
   checkpoint: "epoch_20.pth"
   result: "./"
 
-DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-normKey-featAggre-noLabel-pick01in10-batch1"
+DIR: "ckpt/ade20k-memory-separate-real-resnet18dilated-c1-noBN-normKey-zeroQval-pick01in10-batch1"

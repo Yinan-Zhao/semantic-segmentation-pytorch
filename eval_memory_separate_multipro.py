@@ -94,7 +94,7 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                         scores_tmp, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=segSize)
                         height, width = qread.shape[-2], qread.shape[-1]
                         assert p.shape[0] == height*width
-                        img_refs_mask_resize = nn.functional.interpolate(img_refs_mask, size=(height, width), mode='nearest')
+                        img_refs_mask_resize = nn.functional.interpolate(img_refs_mask[0], size=(height, width), mode='nearest')
                         img_refs_mask_resize_flat = img_refs_mask_resize[:,0,:,:].view(img_refs_mask_resize.shape[0], -1)
                         mask_voting_flat = torch.mm(img_refs_mask_resize_flat, p)
                         mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)

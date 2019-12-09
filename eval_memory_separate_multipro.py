@@ -22,6 +22,13 @@ from scipy.misc import imresize
 
 colors = loadmat('data/color150.mat')['colors']
 
+def segm_one_hot(segm, num_class):
+    size = segm.size()
+    oneHot_size = (num_class+1, size[1], size[2])
+    segm_oneHot = torch.FloatTensor(torch.Size(oneHot_size)).zero_()
+    segm_oneHot = segm_oneHot.scatter_(0, segm, 1.0)
+    return segm_oneHot[0]
+
 
 def visualize_result(data, pred, dir_result):
     (img, seg, info) = data
@@ -83,7 +90,19 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                     np.save('debug/feature_memory_%03d.npy'%(i), feature_memory[-1].detach().cpu().float().numpy())
                     print(batch_data['info'])
                 else:
-                    scores_tmp = segmentation_module(feed_dict, segSize=segSize)
+                    if cfg.eval_att_voting:
+                        scores_tmp, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=segSize)
+                        height, width = qread.shape[-2], qread.shape[-1]
+                        assert p.shape[0] == height*width
+                        img_refs_mask_resize = nn.functional.interpolate(img_refs_mask, size=(height, width), mode='nearest')
+                        img_refs_mask_resize_flat = img_refs_mask_resize[:,0,:,:].view(img_refs_mask_resize.shape[0], -1)
+                        mask_voting_flat = torch.mm(img_refs_mask_resize_flat, p)
+                        mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)
+                        mask_voting = torch.unsqueeze(mask_voting, 0)
+                        scores_tmp = nn.functional.interpolate(mask_voting[:,:cfg.DATASET.num_class], size=segSize, mode='bilinear', align_corners=False)
+
+                    else:
+                        scores_tmp = segmentation_module(feed_dict, segSize=segSize)
                 scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)
                 #scores = scores_tmp
 
@@ -174,7 +193,7 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
 
     crit = nn.NLLLoss(ignore_index=-1)
 
-    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug)
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug or cfg.eval_att_voting)
 
     segmentation_module.cuda()
 
@@ -303,7 +322,12 @@ if __name__ == '__main__':
     parser.add_argument(
         "--eval_from_scratch",
         action='store_true',
-        help="store intermediate results, such as probability",
+        help="evaluate from scratch",
+    )
+    parser.add_argument(
+        "--eval_att_voting",
+        action='store_true',
+        help="evaluate with attention-based voting",
     )
     args = parser.parse_args()
 
@@ -317,6 +341,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.eval_with_train = args.eval_with_train
     cfg.is_debug = args.is_debug
+    cfg.eval_att_voting = args.eval_att_voting
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

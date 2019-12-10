@@ -360,6 +360,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.eval_with_train = args.eval_with_train
     cfg.is_debug = args.is_debug
+    cfg.eval_att_voting = args.eval_att_voting
     cfg.DATASET.ref_val_start = args.ref_val_start
     cfg.DATASET.ref_val_end = args.ref_val_end
     # cfg.freeze()

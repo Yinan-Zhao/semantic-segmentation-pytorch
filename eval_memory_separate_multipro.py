@@ -101,6 +101,13 @@ def evaluate(segmentation_module, loader, cfg, gpu_id, result_queue):
                         mask_voting = torch.unsqueeze(mask_voting, 0)
                         scores_tmp = nn.functional.interpolate(mask_voting[:,:cfg.DATASET.num_class], size=segSize, mode='bilinear', align_corners=False)
 
+                        np.save('debug/p_%03d.npy'%(i), p.detach().cpu().float().numpy())
+                        np.save('debug/img_refs_mask_%03d.npy'%(i), img_refs_mask.cuda().detach().cpu().float().numpy())
+                        np.save('debug/img_refs_mask_resize_%03d.npy'%(i), img_refs_mask_resize.detach().cpu().float().numpy())
+                        np.save('debug/img_refs_mask_resize_flat_%03d.npy'%(i), img_refs_mask_resize_flat.detach().cpu().float().numpy())
+                        np.save('debug/mask_voting_flat_%03d.npy'%(i), mask_voting_flat.detach().cpu().float().numpy())
+                        np.save('debug/mask_voting_%03d.npy'%(i), mask_voting.detach().cpu().float().numpy())
+
                     else:
                         scores_tmp = segmentation_module(feed_dict, segSize=segSize)
                 scores = scores + scores_tmp / len(cfg.DATASET.imgSizes)

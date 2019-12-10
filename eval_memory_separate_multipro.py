@@ -336,6 +336,18 @@ if __name__ == '__main__':
         action='store_true',
         help="evaluate with attention-based voting",
     )
+    parser.add_argument(
+        "--ref_val_start",
+        default=0,
+        help="starting index of memory images, overwrite default config",
+        type=int,
+    )
+    parser.add_argument(
+        "--ref_val_end",
+        default=1,
+        help="starting index of memory images, overwrite default config",
+        type=int,
+    )
     args = parser.parse_args()
 
     cfg.merge_from_file(args.cfg)
@@ -348,7 +360,8 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.eval_with_train = args.eval_with_train
     cfg.is_debug = args.is_debug
-    cfg.eval_att_voting = args.eval_att_voting
+    cfg.DATASET.ref_val_start = args.ref_val_start
+    cfg.DATASET.ref_val_end = args.ref_val_end
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

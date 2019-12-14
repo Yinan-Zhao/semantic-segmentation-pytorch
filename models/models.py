@@ -414,6 +414,11 @@ class ModelBuilder:
             net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
         elif arch == 'c1':
             net_encoder = C1_Encoder_Memory(num_class=num_class, fc_dim=fc_dim, segm_downsampling_rate=segm_downsampling_rate, RGB_mask_combine_val=RGB_mask_combine_val)
+        elif arch == 'hrnetv2':
+            if RGB_mask_combine_val:
+                net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3+1+num_class)
+            else:
+                net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=1+num_class)
         else:
             print(arch)
             raise Exception('Architecture undefined!')
@@ -464,7 +469,7 @@ class ModelBuilder:
             orig_resnext = resnext.__dict__['resnext101'](pretrained=pretrained)
             net_encoder = Resnet(orig_resnext) # we can still use class Resnet
         elif arch == 'hrnetv2':
-            net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained)
+            net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3)
         elif arch == 'attention':
             net_encoder = AttModule(fc_dim=fc_dim)
         else:

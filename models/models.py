@@ -412,6 +412,9 @@ class ModelBuilder:
         elif arch == 'resnet18dilated_nobn':
             orig_resnet = resnet.__dict__['resnet18_noBN']()
             net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
+        elif arch == 'resnet18dilated_nobn_down4':
+            orig_resnet = resnet.__dict__['resnet18_noBN']()
+            net_encoder = ResnetDilated_Memory_Separate_noBN_Down4(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
         elif arch == 'c1':
             net_encoder = C1_Encoder_Memory(num_class=num_class, fc_dim=fc_dim, segm_downsampling_rate=segm_downsampling_rate, RGB_mask_combine_val=RGB_mask_combine_val)
         elif arch == 'hrnetv2':
@@ -850,6 +853,69 @@ class ResnetDilated_Memory_Separate_noBN(nn.Module):
         x = self.relu1(self.conv1(x))
         x = self.relu2(self.conv2(x))
         x = self.relu3(self.conv3(x))
+        x = self.maxpool(x)
+
+        x = self.layer1(x); conv_out.append(x);
+        x = self.layer2(x); conv_out.append(x);
+        x = self.layer3(x); conv_out.append(x);
+        x = self.layer4(x); conv_out.append(x);
+
+        if return_feature_maps:
+            return conv_out
+        return [x]
+
+class ResnetDilated_Memory_Separate_noBN_Down4(nn.Module):
+    def __init__(self, orig_resnet, dilate_scale=8, num_class=150, RGB_mask_combine_val=False):
+        super(ResnetDilated_Memory_Separate_noBN_Down4, self).__init__()
+        from functools import partial
+
+        if dilate_scale == 8:
+            orig_resnet.layer3.apply(
+                partial(self._nostride_dilate, dilate=2))
+            orig_resnet.layer4.apply(
+                partial(self._nostride_dilate, dilate=4))
+        elif dilate_scale == 16:
+            orig_resnet.layer4.apply(
+                partial(self._nostride_dilate, dilate=2))
+
+        # take pretrained resnet, except AvgPool and FC
+        #self.conv1 = orig_resnet.conv1
+        if RGB_mask_combine_val:
+            self.conv1 = conv3x3(3+1+num_class, 64, stride=2)
+        else:
+            self.conv1 = conv3x3(1+num_class, 64, stride=2)
+        
+        self.relu1 = orig_resnet.relu1
+        self.conv2 = orig_resnet.conv2
+        self.relu2 = orig_resnet.relu2
+        self.maxpool = orig_resnet.maxpool
+        self.layer1 = orig_resnet.layer1
+        self.layer2 = orig_resnet.layer2
+        self.layer3 = orig_resnet.layer3
+        self.layer4 = orig_resnet.layer4
+
+        nn.init.kaiming_normal_(self.conv1.weight.data)
+
+    def _nostride_dilate(self, m, dilate):
+        classname = m.__class__.__name__
+        if classname.find('Conv') != -1:
+            # the convolution with stride
+            if m.stride == (2, 2):
+                m.stride = (1, 1)
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate//2, dilate//2)
+                    m.padding = (dilate//2, dilate//2)
+            # other convoluions
+            else:
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate, dilate)
+                    m.padding = (dilate, dilate)
+
+    def forward(self, x, return_feature_maps=False):
+        conv_out = []
+
+        x = self.relu1(self.conv1(x))
+        x = self.relu2(self.conv2(x))
         x = self.maxpool(x)
 
         x = self.layer1(x); conv_out.append(x);

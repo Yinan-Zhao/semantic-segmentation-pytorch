@@ -192,7 +192,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
         self.debug = debug
 
-    def maskRead(self, qkey, qval, qmask, mkey, mval, mmask):
+    def maskRead(self, qkey, qval, qmask, mkey, mval, mmask, debug=False):
         '''
         read for *mask area* of query from *mask area* of memory
         '''
@@ -213,19 +213,21 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             mv_b = mval[b,:,mmask[b,0]] # dv, Nm 
             # print(mv_b.shape)
 
-            p = torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
+            p = self.p_scalar*torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
             #p = p / math.sqrt(Dk)
-            p = p*self.p_scalar
             p = F.softmax(p, dim=0)
 
-            read = torch.mm(mv_b, p) # dv, Nq
+            qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
-            qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
+            #qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
         #np.save('debug/mv_b.npy', mv_b.detach().cpu().float().numpy())
         #np.save('debug/p.npy', p.detach().cpu().float().numpy())
         #np.save('debug/mval.npy', mval.detach().cpu().float().numpy())
         #np.save('debug/qread.npy', qread.detach().cpu().float().numpy())
-        return qk_b, mk_b, mv_b, p, qread
+        if debug:
+            return qk_b, mk_b, mv_b, p, qread
+        else:
+            return qread
 
     def memoryEncode(self, encoder, img_refs, return_feature_maps=True):
         # encoding into memory
@@ -285,13 +287,23 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 if self.memory_feature_aggregation:
                     if self.memory_noLabel:
                         mval = mval_rgb
-                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                        if self.debug:
+                            qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                        else:
+                            qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
                     else:
-                        qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
-                        qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
+                        if self.debug:
+                            qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                            qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask, self.debug)
+                        else:
+                            qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                            qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
                         qread = torch.cat((qread_label, qread_rgb), dim=1)
                 else:
-                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                    if self.debug:
+                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                    else:
+                        qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
 
                 if self.qval_qread_BN:
                     qval = self.bn_val(qval)
@@ -341,13 +353,23 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if self.memory_feature_aggregation:
                 if self.memory_noLabel:
                     mval = mval_rgb
-                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                    if self.debug:
+                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                    else:
+                        qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
                 else:
-                    qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
-                    qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
+                    if self.debug:
+                        qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                        qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask, self.debug)
+                    else:
+                        qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                        qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
                     qread = torch.cat((qread_label, qread_rgb), dim=1)
             else:
-                qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                if self.debug:
+                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                else:
+                    qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
             
             if self.qval_qread_BN:
                 qval = self.bn_val(qval)

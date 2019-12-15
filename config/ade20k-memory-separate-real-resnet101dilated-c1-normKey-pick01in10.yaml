@@ -5,18 +5,24 @@ DATASET:
   num_class: 150
   imgSizes: (300, 375, 450, 525, 600)
   imgMaxSize: 1000
-  padding_constant: 8
-  segm_downsampling_rate: 8
+  padding_constant: 32
+  segm_downsampling_rate: 4
   random_flip: True
+  ref_path: "./data/ref_real_training.txt"
+  ref_val_path: "./data/ref_real_val.txt"
+  ref_start: 1
+  ref_end: 11
+  random_pick: 1
 
 MODEL:
-  arch_encoder: "resnet50dilated"
-  arch_decoder: "ppm_deepsup"
-  fc_dim: 2048
+  arch_encoder: "hrnetv2"
+  arch_decoder: "c1"
+  fc_dim: 720
+  normalize_key: True
 
 TRAIN:
   batch_size_per_gpu: 2
-  num_epoch: 25
+  num_epoch: 30
   start_epoch: 0
   epoch_iters: 5000
   optim: "SGD"
@@ -33,10 +39,10 @@ TRAIN:
 
 VAL:
   visualize: False
-  checkpoint: "epoch_25.pth"
+  checkpoint: "epoch_30.pth"
 
 TEST:
-  checkpoint: "epoch_25.pth"
+  checkpoint: "epoch_30.pth"
   result: "./"
 
-DIR: "ckpt/ade20k-resnet50dilated-ppm_deepsup"
+DIR: "ckpt/ade20k-memory-separate-real-hrnetv2-c1-normKey-pick01in10"

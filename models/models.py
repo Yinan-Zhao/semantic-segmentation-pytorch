@@ -220,7 +220,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             print(p.shape)
             print(p.dtype)
-            print(torch.cuda.memory_allocated())
+            #print(torch.cuda.memory_allocated())
 
             qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
@@ -324,7 +324,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                         qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
                     else:
                         start = time.time()
+                        print('before maskRead GPU memory: %d' % (torch.cuda.memory_allocated()))
                         qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                        print('after maskRead GPU memory: %d' % (torch.cuda.memory_allocated()))
                         print('maskRead: %f' % (time.time()-start)) 
 
                 if self.qval_qread_BN:

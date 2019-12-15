@@ -216,7 +216,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             p = self.p_scalar*torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
             #p = p / math.sqrt(Dk)
-            p = F.softmax(p, dim=0)
+            #p = F.softmax(p, dim=0)
 
             print(p.shape)
             print(p.dtype)

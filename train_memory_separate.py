@@ -266,7 +266,9 @@ def main(cfg, gpus):
     #patch_replication_callback(segmentation_module)
     print('segmentation module')
     print(type(segmentation_module))
-    print(segmentation_module)
+    print(type(segmentation_module[0]))
+    print(len(segmentation_module))
+    print(segmentation_module[0])
     segmentation_module.cuda()
 
     # Set up optimizers

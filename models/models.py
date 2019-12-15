@@ -220,6 +220,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             print(p.shape)
             print(p.dtype)
+            print(torch.cuda.memory_allocated())
 
             qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq

@@ -7,6 +7,7 @@ import numpy as np
 from . import resnet, resnext, mobilenet, hrnet
 from lib.nn import SynchronizedBatchNorm2d
 BatchNorm2d = SynchronizedBatchNorm2d
+import time
 
 
 class SegmentationModuleBase(nn.Module):
@@ -264,18 +265,33 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if self.deep_sup_scale is not None: # use deep supervision technique
                 raise Exception('deep_sup_scale is not implemented') 
             else:
-                feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)                
-                qkey, qval = self.attention_query(feature_enc)
-                
-                feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
-                mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
+                start = time.time()
+                feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)   
+                print('encoder_query: %f' % (time.time()-start))  
 
+                start = time.time()           
+                qkey, qval = self.attention_query(feature_enc)
+                print('attention_query: %f' % (time.time()-start))  
+                
+                start = time.time()
+                feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
+                print('memoryEncode RGB: %f' % (time.time()-start))  
+
+                start = time.time()
+                mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
+                print('memoryAttention RGB: %f' % (time.time()-start))  
+
+                start = time.time()
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
+                print('memoryEncode mask: %f' % (time.time()-start))  
                 #np.save('debug/img_refs_mask.npy', feed_dict['img_refs_mask'].detach().cpu().float().numpy())
                 #for idx, feat in enumerate(mask_feature_memory):
                 #    print(feat.shape)
                 #    np.save('debug/mask_feature_memory_%d.npy'%(idx), feat.detach().cpu().float().numpy())
+                start = time.time()
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
+                print('memoryAttention mask: %f' % (time.time()-start))  
+
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
@@ -303,7 +319,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     if self.debug:
                         qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
                     else:
+                        start = time.time()
                         qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                        print('maskRead: %f' % (time.time()-start)) 
 
                 if self.qval_qread_BN:
                     qval = self.bn_val(qval)

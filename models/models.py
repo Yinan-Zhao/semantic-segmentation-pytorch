@@ -219,7 +219,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             p = F.softmax(p, dim=0)
 
             print(p.shape)
-            print(type(p))
+            print(p.dtype)
 
             qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq

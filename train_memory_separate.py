@@ -259,9 +259,9 @@ def main(cfg, gpus):
             device_ids=gpus)
         # For sync bn
         patch_replication_callback(segmentation_module)'''
-    segmentation_module = UserScatteredDataParallel(
+    '''segmentation_module = UserScatteredDataParallel(
         segmentation_module,
-        device_ids=gpus)
+        device_ids=gpus)'''
     # For sync bn
     #patch_replication_callback(segmentation_module)
     segmentation_module.cuda()

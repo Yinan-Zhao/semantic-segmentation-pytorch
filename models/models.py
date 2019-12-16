@@ -579,6 +579,8 @@ class ModelBuilder:
         arch = arch.lower()
         if arch == 'attention':
             net_encoder = AttModule(fc_dim=fc_dim)
+        elif arch == 'attention_double':
+            net_encoder = AttModule_Double(fc_dim=fc_dim)
         else:
             raise Exception('Architecture undefined!')
 
@@ -595,6 +597,8 @@ class ModelBuilder:
         arch = arch.lower()
         if arch == 'attention':
             net_encoder = AttMemoryModule(fc_dim=fc_dim, att_fc_dim=att_fc_dim)
+        elif arch == 'attention_double':
+            net_encoder = AttMemoryModule_Double(fc_dim=fc_dim, att_fc_dim=att_fc_dim)
         else:
             raise Exception('Architecture undefined!')
 
@@ -618,6 +622,11 @@ class ModelBuilder:
                 use_softmax=use_softmax)
         elif arch == 'c1':
             net_decoder = C1(
+                num_class=num_class,
+                fc_dim=fc_dim,
+                use_softmax=use_softmax)
+        elif arch == 'c1_double':
+            net_decoder = C1_Double(
                 num_class=num_class,
                 fc_dim=fc_dim,
                 use_softmax=use_softmax)
@@ -1120,6 +1129,31 @@ class C1(nn.Module):
 
         return x
 
+class C1_Double(nn.Module):
+    def __init__(self, num_class=150, fc_dim=2048, use_softmax=False):
+        super(C1_Double, self).__init__()
+        self.use_softmax = use_softmax
+
+        self.cbr = conv3x3_bn_relu(2*fc_dim, fc_dim // 2, 1)
+
+        # last conv
+        self.conv_last = nn.Conv2d(fc_dim // 2, num_class, 1, 1, 0)
+
+    def forward(self, conv_out, segSize=None):
+        conv5 = conv_out[-1]
+        x = self.cbr(conv5)
+        x = self.conv_last(x)
+
+        if self.use_softmax: # is True during inference
+            x = nn.functional.interpolate(
+                x, size=segSize, mode='bilinear', align_corners=False)
+            x = nn.functional.softmax(x, dim=1)
+            #x = nn.functional.log_softmax(x, dim=1)
+        else:
+            x = nn.functional.log_softmax(x, dim=1)
+
+        return x
+
 class C1_Aggregation(nn.Module):
     def __init__(self, num_class=150, fc_dim=2048, use_softmax=False):
         super(C1_Aggregation, self).__init__()
@@ -1163,6 +1197,23 @@ class AttModule(nn.Module):
 
         return key, value
 
+class AttModule_Double(nn.Module):
+    def __init__(self, fc_dim=2048):
+        super(AttModule_Double, self).__init__()
+
+        self.key_conv = nn.Conv2d(fc_dim, fc_dim//4, kernel_size=3,
+                      stride=1, padding=1, bias=False)
+        self.value_conv = nn.Conv2d(fc_dim, fc_dim, kernel_size=3,
+                      stride=1, padding=1, bias=False)
+        self.out_dim = fc_dim
+
+    def forward(self, conv_out):
+        conv5 = conv_out[-1]
+        key = self.key_conv(conv5)
+        value = self.value_conv(conv5)
+
+        return key, value
+
 class AttMemoryModule(nn.Module):
     def __init__(self, fc_dim=2048, att_fc_dim=512):
         super(AttMemoryModule, self).__init__()
@@ -1172,6 +1223,23 @@ class AttMemoryModule(nn.Module):
         self.value_conv = nn.Conv2d(att_fc_dim, fc_dim//2, kernel_size=3,
                       stride=1, padding=1, bias=False)
         self.out_dim = fc_dim//2
+
+    def forward(self, conv_out):
+        conv5 = conv_out[-1]
+        key = self.key_conv(conv5)
+        value = self.value_conv(conv5)
+
+        return key, value
+
+class AttMemoryModule_Double(nn.Module):
+    def __init__(self, fc_dim=2048, att_fc_dim=512):
+        super(AttMemoryModule_Double, self).__init__()
+
+        self.key_conv = nn.Conv2d(att_fc_dim, fc_dim//4, kernel_size=3,
+                      stride=1, padding=1, bias=False)
+        self.value_conv = nn.Conv2d(att_fc_dim, fc_dim, kernel_size=3,
+                      stride=1, padding=1, bias=False)
+        self.out_dim = fc_dim
 
     def forward(self, conv_out):
         conv5 = conv_out[-1]

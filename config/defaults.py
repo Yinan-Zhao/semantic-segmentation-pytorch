@@ -44,6 +44,8 @@ _C.DATASET.RGB_mask_combine_val = False
 _C.MODEL = CN()
 # architecture of net_encoder
 _C.MODEL.arch_encoder = "resnet50dilated"
+# architecture of net_attention
+_C.MODEL.arch_attention = "attention"
 # architecture of net_decoder
 _C.MODEL.arch_decoder = "ppm_deepsup"
 # weights to finetune net_encoder
@@ -58,7 +60,7 @@ _C.MODEL.weights_att_memory = ""
 _C.MODEL.fc_dim = 2048
 _C.MODEL.att_fc_dim = 512
 _C.MODEL.mask_feat_downsample_rate = 1
-_C.MODEL.att_mat_downsample_rate = 2
+_C.MODEL.att_mat_downsample_rate = 1
 _C.MODEL.zero_memory = False
 _C.MODEL.zero_qval = False
 _C.MODEL.random_memory_bias = False

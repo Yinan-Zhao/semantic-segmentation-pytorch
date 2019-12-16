@@ -206,11 +206,11 @@ def main(cfg, gpus):
                 segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate,
                 pretrained=cfg.memory_enc_pretrained)
     net_att_query = ModelBuilder.build_att_query(
-        arch='attention',
+        arch=cfg.MODEL.arch_attention,
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_att_query)
     net_att_memory = ModelBuilder.build_att_memory(
-        arch='attention',
+        arch=cfg.MODEL.arch_attention,
         fc_dim=cfg.MODEL.fc_dim,
         att_fc_dim=cfg.MODEL.att_fc_dim,
         weights=cfg.MODEL.weights_att_memory)

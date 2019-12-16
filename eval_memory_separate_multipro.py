@@ -184,11 +184,11 @@ def worker(cfg, gpu_id, start_idx, end_idx, result_queue):
                 RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
                 segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
     net_att_query = ModelBuilder.build_att_query(
-        arch='attention',
+        arch=cfg.MODEL.arch_attention,
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_att_query)
     net_att_memory = ModelBuilder.build_att_memory(
-        arch='attention',
+        arch=cfg.MODEL.arch_attention,
         fc_dim=cfg.MODEL.fc_dim,
         att_fc_dim=cfg.MODEL.att_fc_dim,
         weights=cfg.MODEL.weights_att_memory)

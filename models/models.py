@@ -168,7 +168,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -187,19 +187,22 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.p_scalar = p_scalar
         self.memory_feature_aggregation = memory_feature_aggregation
         self.memory_noLabel = memory_noLabel
+        self.mask_feat_downsample_rate = mask_feat_downsample_rate
+        self.att_mat_downsample_rate = att_mat_downsample_rate
         if qval_qread_BN:
             self.bn_val = BatchNorm2d(net_att_query.out_dim)
             self.bn_read = BatchNorm2d(net_att_memory.out_dim)
 
         self.debug = debug
 
-    def maskRead(self, qkey, qval, qmask, mkey, mval, mmask, debug=False):
+    def maskRead(self, qkey, qmask, mkey, mval, mmask, output_shape, debug=False):
         '''
         read for *mask area* of query from *mask area* of memory
         '''
         B, Dk, _, H, W = mkey.size()
         _, Dv, _, _, _ = mval.size()
-        qread = torch.zeros_like(qval)
+
+        qread = torch.zeros(output_shape).cuda()
         # key: b,dk,t,h,w
         # value: b,dv,t,h,w
         # mask: b,1,t,h,w
@@ -216,22 +219,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             p = self.p_scalar*torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
             #p = p / math.sqrt(Dk)
-            #p = F.softmax(p, dim=0)
-            torch.exp(p, out=p)
-            summed = torch.sum(p, dim=0, keepdim=True)
-            p /= summed
-
-            print(p.shape)
-            print(p.dtype)
-            #print(torch.cuda.memory_allocated())
+            p = F.softmax(p, dim=0)
 
             qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
             #qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
-        #np.save('debug/mv_b.npy', mv_b.detach().cpu().float().numpy())
-        #np.save('debug/p.npy', p.detach().cpu().float().numpy())
-        #np.save('debug/mval.npy', mval.detach().cpu().float().numpy())
-        #np.save('debug/qread.npy', qread.detach().cpu().float().numpy())
+
         if debug:
             return qk_b, mk_b, mv_b, p, qread
         else:
@@ -266,39 +259,61 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         vals = torch.stack(val_, dim=2)
         return keys, vals
 
+    def downsample_5d(self, feat, downsample_rate):
+        # feat: b,dk,t,h,w
+        feat_downsample = torch.zeros(feat.shape[0], feat.shape[1], feat.shape[2], feat.shape[3]//downsample_rate, feat.shape[4]//downsample_rate).cuda()
+        for t in range(feat.shape[2]):
+            feat_downsample[:,:,t,:,:] = nn.functional.interpolate(feat[:,:,t,:,:], 
+                size=(feat.shape[3]//downsample_rate, feat.shape[4]//downsample_rate), 
+                mode='bilinear')
+        return feat_downsample
+
     def forward(self, feed_dict, *, segSize=None):
         # training
         if segSize is None:
             if self.deep_sup_scale is not None: # use deep supervision technique
                 raise Exception('deep_sup_scale is not implemented') 
             else:
-                start = time.time()
+                #start = time.time()
                 feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)   
-                print('encoder_query: %f' % (time.time()-start))  
+                #print('encoder_query: %f' % (time.time()-start))  
 
-                start = time.time()           
+                #start = time.time()           
                 qkey, qval = self.attention_query(feature_enc)
-                print('attention_query: %f' % (time.time()-start))  
+                #print('attention_query: %f' % (time.time()-start))  
                 
-                start = time.time()
+                #start = time.time()
                 feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
-                print('memoryEncode RGB: %f' % (time.time()-start))  
+                #print('memoryEncode RGB: %f' % (time.time()-start))  
 
-                start = time.time()
+                #start = time.time()
                 mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
-                print('memoryAttention RGB: %f' % (time.time()-start))  
+                #print('memoryAttention RGB: %f' % (time.time()-start))  
 
-                start = time.time()
+                #start = time.time()
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
-                print('memoryEncode mask: %f' % (time.time()-start))  
-                #np.save('debug/img_refs_mask.npy', feed_dict['img_refs_mask'].detach().cpu().float().numpy())
-                #for idx, feat in enumerate(mask_feature_memory):
-                #    print(feat.shape)
-                #    np.save('debug/mask_feature_memory_%d.npy'%(idx), feat.detach().cpu().float().numpy())
-                start = time.time()
+                #print('memoryEncode mask: %f' % (time.time()-start))  
+                
+                #start = time.time()
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
-                print('memoryAttention mask: %f' % (time.time()-start))  
+                #print('memoryAttention mask: %f' % (time.time()-start))  
 
+                if self.att_mat_downsample_rate != 1:
+                    output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)
+                    qkey = nn.functional.interpolate(qkey, 
+                        size=(qkey.shape[2]//self.att_mat_downsample_rate, 
+                            qkey.shape[3]//self.att_mat_downsample_rate), 
+                        mode='bilinear')
+
+                    mkey = self.downsample_5d(mkey, downsample_rate=self.att_mat_downsample_rate)
+
+                    if self.memory_feature_aggregation:
+                        mval_rgb = self.downsample_5d(mval_rgb, downsample_rate=self.att_mat_downsample_rate)
+                else:
+                    output_shape = qval.shape
+
+                if self.mask_feat_downsample_rate != 1:
+                    mval = self.downsample_5d(mval, downsample_rate=self.mask_feat_downsample_rate)
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
@@ -311,26 +326,32 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     if self.memory_noLabel:
                         mval = mval_rgb
                         if self.debug:
-                            qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                            qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
                         else:
-                            qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                            qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
                     else:
                         if self.debug:
-                            qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
-                            qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask, self.debug)
+                            qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
+                            qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qmask, mkey, mval_rgb, mmask, output_shape, self.debug)
                         else:
-                            qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
-                            qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
+                            qread_label = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
+                            qread_rgb = self.maskRead(qkey, qmask, mkey, mval_rgb, mmask, output_shape)
                         qread = torch.cat((qread_label, qread_rgb), dim=1)
                 else:
                     if self.debug:
-                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
                     else:
-                        start = time.time()
-                        print('before maskRead GPU memory: %d' % (torch.cuda.memory_allocated()))
-                        qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
-                        print('after maskRead GPU memory: %d' % (torch.cuda.memory_allocated()))
-                        print('maskRead: %f' % (time.time()-start)) 
+                        #start = time.time()
+                        #print('before maskRead GPU memory: %d' % (torch.cuda.memory_allocated()))
+                        qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
+                        #print('after maskRead GPU memory: %d' % (torch.cuda.memory_allocated()))
+                        #print('maskRead: %f' % (time.time()-start)) 
+
+                if self.att_mat_downsample_rate != 1:
+                    qread = nn.functional.interpolate(qread, 
+                        size=(qread.shape[2]*self.att_mat_downsample_rate, 
+                            qread.shape[3]*self.att_mat_downsample_rate), 
+                        mode='bilinear')
 
                 if self.qval_qread_BN:
                     qval = self.bn_val(qval)
@@ -370,6 +391,23 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
             _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
 
+            if self.att_mat_downsample_rate != 1:
+                output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)
+                qkey = nn.functional.interpolate(qkey, 
+                    size=(qkey.shape[2]//self.att_mat_downsample_rate, 
+                        qkey.shape[3]//self.att_mat_downsample_rate), 
+                    mode='bilinear')
+
+                mkey = self.downsample_5d(mkey, downsample_rate=self.att_mat_downsample_rate)
+
+                if self.memory_feature_aggregation:
+                    mval_rgb = self.downsample_5d(mval_rgb, downsample_rate=self.att_mat_downsample_rate)
+            else:
+                output_shape = qval.shape
+
+            if self.mask_feat_downsample_rate != 1:
+                mval = self.downsample_5d(mval, downsample_rate=self.mask_feat_downsample_rate)
+
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
             mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
@@ -381,22 +419,28 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 if self.memory_noLabel:
                     mval = mval_rgb
                     if self.debug:
-                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                        qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
                     else:
-                        qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                        qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
                 else:
                     if self.debug:
-                        qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
-                        qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask, self.debug)
+                        qk_b, mk_b, mv_b, p, qread_label = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
+                        qk_b, mk_b, mv_b, p, qread_rgb = self.maskRead(qkey, qmask, mkey, mval_rgb, mmask, output_shape, self.debug)
                     else:
-                        qread_label = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
-                        qread_rgb = self.maskRead(qkey, qval, qmask, mkey, mval_rgb, mmask)
+                        qread_label = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
+                        qread_rgb = self.maskRead(qkey, qmask, mkey, mval_rgb, mmask, output_shape)
                     qread = torch.cat((qread_label, qread_rgb), dim=1)
             else:
                 if self.debug:
-                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask, self.debug)
+                    qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
                 else:
-                    qread = self.maskRead(qkey, qval, qmask, mkey, mval, mmask)
+                    qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
+
+            if self.att_mat_downsample_rate != 1:
+                qread = nn.functional.interpolate(qread, 
+                    size=(qread.shape[2]*self.att_mat_downsample_rate, 
+                        qread.shape[3]*self.att_mat_downsample_rate), 
+                    mode='bilinear')
             
             if self.qval_qread_BN:
                 qval = self.bn_val(qval)
@@ -461,9 +505,6 @@ class ModelBuilder:
         elif arch == 'resnet18dilated_nobn':
             orig_resnet = resnet.__dict__['resnet18_noBN']()
             net_encoder = ResnetDilated_Memory_Separate_noBN(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
-        elif arch == 'resnet18dilated_nobn_down4':
-            orig_resnet = resnet.__dict__['resnet18_noBN']()
-            net_encoder = ResnetDilated_Memory_Separate_noBN_Down4(orig_resnet, dilate_scale=8, num_class=num_class, RGB_mask_combine_val=RGB_mask_combine_val)
         elif arch == 'c1':
             net_encoder = C1_Encoder_Memory(num_class=num_class, fc_dim=fc_dim, segm_downsampling_rate=segm_downsampling_rate, RGB_mask_combine_val=RGB_mask_combine_val)
         elif arch == 'hrnetv2':
@@ -522,8 +563,6 @@ class ModelBuilder:
             net_encoder = Resnet(orig_resnext) # we can still use class Resnet
         elif arch == 'hrnetv2':
             net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3)
-        elif arch == 'attention':
-            net_encoder = AttModule(fc_dim=fc_dim)
         else:
             raise Exception('Architecture undefined!')
 
@@ -531,6 +570,38 @@ class ModelBuilder:
         # net_encoder.apply(ModelBuilder.weights_init)
         if len(weights) > 0:
             print('Loading weights for net_encoder')
+            net_encoder.load_state_dict(
+                torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
+        return net_encoder
+
+    @staticmethod
+    def build_att_query(arch='attention', fc_dim=512, weights=''):
+        arch = arch.lower()
+        if arch == 'attention':
+            net_encoder = AttModule(fc_dim=fc_dim)
+        else:
+            raise Exception('Architecture undefined!')
+
+        # encoders are usually pretrained
+        # net_encoder.apply(ModelBuilder.weights_init)
+        if len(weights) > 0:
+            print('Loading weights for net_att_query')
+            net_encoder.load_state_dict(
+                torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
+        return net_encoder
+
+    @staticmethod
+    def build_att_memory(arch='attention', fc_dim=512, att_fc_dim=512, weights=''):
+        arch = arch.lower()
+        if arch == 'attention':
+            net_encoder = AttMemoryModule(fc_dim=fc_dim, att_fc_dim=att_fc_dim)
+        else:
+            raise Exception('Architecture undefined!')
+
+        # encoders are usually pretrained
+        # net_encoder.apply(ModelBuilder.weights_init)
+        if len(weights) > 0:
+            print('Loading weights for net_att_memory')
             net_encoder.load_state_dict(
                 torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
         return net_encoder
@@ -913,69 +984,6 @@ class ResnetDilated_Memory_Separate_noBN(nn.Module):
             return conv_out
         return [x]
 
-class ResnetDilated_Memory_Separate_noBN_Down4(nn.Module):
-    def __init__(self, orig_resnet, dilate_scale=8, num_class=150, RGB_mask_combine_val=False):
-        super(ResnetDilated_Memory_Separate_noBN_Down4, self).__init__()
-        from functools import partial
-
-        if dilate_scale == 8:
-            orig_resnet.layer3.apply(
-                partial(self._nostride_dilate, dilate=2))
-            orig_resnet.layer4.apply(
-                partial(self._nostride_dilate, dilate=4))
-        elif dilate_scale == 16:
-            orig_resnet.layer4.apply(
-                partial(self._nostride_dilate, dilate=2))
-
-        # take pretrained resnet, except AvgPool and FC
-        #self.conv1 = orig_resnet.conv1
-        if RGB_mask_combine_val:
-            self.conv1 = conv3x3(3+1+num_class, 64, stride=2)
-        else:
-            self.conv1 = conv3x3(1+num_class, 64, stride=2)
-        
-        self.relu1 = orig_resnet.relu1
-        self.conv2 = orig_resnet.conv2
-        self.relu2 = orig_resnet.relu2
-        self.maxpool = orig_resnet.maxpool
-        self.layer1 = orig_resnet.layer1
-        self.layer2 = orig_resnet.layer2
-        self.layer3 = orig_resnet.layer3
-        self.layer4 = orig_resnet.layer4
-
-        nn.init.kaiming_normal_(self.conv1.weight.data)
-
-    def _nostride_dilate(self, m, dilate):
-        classname = m.__class__.__name__
-        if classname.find('Conv') != -1:
-            # the convolution with stride
-            if m.stride == (2, 2):
-                m.stride = (1, 1)
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate//2, dilate//2)
-                    m.padding = (dilate//2, dilate//2)
-            # other convoluions
-            else:
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate, dilate)
-                    m.padding = (dilate, dilate)
-
-    def forward(self, x, return_feature_maps=False):
-        conv_out = []
-
-        x = self.relu1(self.conv1(x))
-        x = self.relu2(self.conv2(x))
-        x = self.maxpool(x)
-
-        x = self.layer1(x); conv_out.append(x);
-        x = self.layer2(x); conv_out.append(x);
-        x = self.layer3(x); conv_out.append(x);
-        x = self.layer4(x); conv_out.append(x);
-
-        if return_feature_maps:
-            return conv_out
-        return [x]
-
 class C1_Encoder_Memory(nn.Module):
     def __init__(self, num_class=150, fc_dim=2048, segm_downsampling_rate=8, RGB_mask_combine_val=False):
         super(C1_Encoder_Memory, self).__init__()
@@ -1145,6 +1153,23 @@ class AttModule(nn.Module):
         self.key_conv = nn.Conv2d(fc_dim, fc_dim//8, kernel_size=3,
                       stride=1, padding=1, bias=False)
         self.value_conv = nn.Conv2d(fc_dim, fc_dim//2, kernel_size=3,
+                      stride=1, padding=1, bias=False)
+        self.out_dim = fc_dim//2
+
+    def forward(self, conv_out):
+        conv5 = conv_out[-1]
+        key = self.key_conv(conv5)
+        value = self.value_conv(conv5)
+
+        return key, value
+
+class AttMemoryModule(nn.Module):
+    def __init__(self, fc_dim=2048, att_fc_dim=512):
+        super(AttMemoryModule, self).__init__()
+
+        self.key_conv = nn.Conv2d(att_fc_dim, fc_dim//8, kernel_size=3,
+                      stride=1, padding=1, bias=False)
+        self.value_conv = nn.Conv2d(att_fc_dim, fc_dim//2, kernel_size=3,
                       stride=1, padding=1, bias=False)
         self.out_dim = fc_dim//2
 

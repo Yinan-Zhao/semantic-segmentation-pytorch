@@ -16,9 +16,12 @@ DATASET:
 
 MODEL:
   arch_encoder: "hrnetv2"
-  memory_encoder_arch: "resnet18dilated_nobn_down4"
+  memory_encoder_arch: "resnet18dilated_nobn"
   arch_decoder: "c1"
+  mask_feat_downsample_rate: 1
+  att_mat_downsample_rate: 2
   fc_dim: 720
+  att_fc_dim: 512
   normalize_key: True
 
 TRAIN:
@@ -46,4 +49,4 @@ TEST:
   checkpoint: "epoch_30.pth"
   result: "./"
 
-DIR: "ckpt/ade20k-memory-separate-real-hrnetv2-resnet18dilated-c1-normKey-pick01in10"
+DIR: "ckpt/ade20k-memory-separate-real-hrnetv2-resnet18dilated-noBN-c1-normKey-pick01in10"

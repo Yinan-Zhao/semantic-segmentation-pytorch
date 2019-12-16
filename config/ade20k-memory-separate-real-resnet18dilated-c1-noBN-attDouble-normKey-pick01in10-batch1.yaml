@@ -17,7 +17,7 @@ DATASET:
 MODEL:
   arch_encoder: "resnet18dilated"
   arch_attention: "attention_double"
-  arch_decoder: "c1"
+  arch_decoder: "c1_double"
   mask_feat_downsample_rate: 1
   att_mat_downsample_rate: 1
   fc_dim: 512

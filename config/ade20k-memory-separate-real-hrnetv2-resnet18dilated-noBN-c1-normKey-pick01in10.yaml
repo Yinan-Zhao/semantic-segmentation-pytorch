@@ -44,10 +44,10 @@ TRAIN:
 
 VAL:
   visualize: False
-  checkpoint: "epoch_30.pth"
+  checkpoint: "epoch_25.pth"
 
 TEST:
-  checkpoint: "epoch_30.pth"
+  checkpoint: "epoch_25.pth"
   result: "./"
 
 DIR: "ckpt/ade20k-memory-separate-real-hrnetv2-resnet18dilated-noBN-c1-normKey-pick01in10"

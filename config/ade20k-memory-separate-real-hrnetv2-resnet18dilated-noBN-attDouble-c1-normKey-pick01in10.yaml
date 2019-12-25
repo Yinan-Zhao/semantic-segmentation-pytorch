@@ -1,0 +1,53 @@
+DATASET:
+  root_dataset: "./data/"
+  list_train: "./data/training.odgt"
+  list_val: "./data/validation.odgt"
+  num_class: 150
+  imgSizes: (300, 375, 450, 525, 600)
+  imgMaxSize: 1000
+  padding_constant: 32
+  segm_downsampling_rate: 4
+  random_flip: True
+  ref_path: "./data/ref_real_training.txt"
+  ref_val_path: "./data/ref_real_val.txt"
+  ref_start: 1
+  ref_end: 11
+  random_pick: 1
+
+MODEL:
+  arch_encoder: "hrnetv2"
+  memory_encoder_arch: "resnet18dilated_nobn"
+  arch_attention: "attention_double"
+  arch_decoder: "c1_double"
+  mask_feat_downsample_rate: 1
+  att_mat_downsample_rate: 2
+  fc_dim: 720
+  att_fc_dim: 512
+  normalize_key: True
+
+TRAIN:
+  batch_size_per_gpu: 2
+  num_epoch: 30
+  start_epoch: 0
+  epoch_iters: 5000
+  optim: "SGD"
+  lr_encoder: 0.02
+  lr_decoder: 0.02
+  lr_pow: 0.9
+  beta1: 0.9
+  weight_decay: 1e-4
+  deep_sup_scale: 0.4
+  fix_bn: False
+  workers: 16
+  disp_iter: 20
+  seed: 304
+
+VAL:
+  visualize: False
+  checkpoint: "epoch_30.pth"
+
+TEST:
+  checkpoint: "epoch_30.pth"
+  result: "./"
+
+DIR: "ckpt/ade20k-memory-separate-real-hrnetv2-resnet18dilated-noBN-attDouble-c1-normKey-pick01in10"

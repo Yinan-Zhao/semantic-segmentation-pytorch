@@ -1,6 +1,6 @@
 #!/bin/bash
-python eval_memory_separate_multipro.py --gpus 0,1,2,3 --cfg $1 --ref_val_start 0 --ref_val_end 1 \
-2>&1 | tee $2.log
+#python eval_memory_separate_multipro.py --gpus 0,1,2,3 --cfg $1 --ref_val_start 0 --ref_val_end 1 \
+#2>&1 | tee $2.log
 python eval_memory_separate_multipro.py --gpus 0,1,2,3 --cfg $1 --ref_val_start 0 --ref_val_end 2 \
 2>&1 | tee $2_ref0-2.log
 python eval_memory_separate_multipro.py --gpus 0,1,2,3 --cfg $1 --ref_val_start 0 --ref_val_end 3 \

@@ -16,13 +16,13 @@ DATASET:
 
 MODEL:
   arch_encoder: "resnet101dilated"
-  memory_encoder_arch: "resnet101dilated"
+  memory_encoder_arch: "resnet18dilated_noBN"
   arch_attention: "attention_double"
   arch_decoder: "c1_double"
   mask_feat_downsample_rate: 1
   att_mat_downsample_rate: 1
   fc_dim: 2048
-  att_fc_dim: 2048
+  att_fc_dim: 512
   normalize_key: True
 
 TRAIN:
@@ -51,4 +51,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/ade20k-memory-separate-real-resnet101dilated-c1-attDouble-normKey-pick01in10"
+DIR: "ckpt/ade20k-memory-separate-real-resnet101dilated-resnet18dilated-noBN-c1-attDouble-normKey-pick01in10"

@@ -3,10 +3,10 @@ DATASET:
   list_train: "./data/training.odgt"
   list_val: "./data/validation.odgt"
   num_class: 150
-  imgSizes: (300, 375, 450, 525, 600)
+  imgSizes: (300, 375)
   imgMaxSize: 1000
-  padding_constant: 32
-  segm_downsampling_rate: 4
+  padding_constant: 8
+  segm_downsampling_rate: 8
   random_flip: True
   ref_path: "./data/ref_real_training.txt"
   ref_val_path: "./data/ref_real_val.txt"
@@ -15,14 +15,18 @@ DATASET:
   random_pick: 1
 
 MODEL:
-  arch_encoder: "hrnetv2"
-  arch_decoder: "c1"
-  fc_dim: 720
+  arch_encoder: "resnet101dilated"
+  arch_attention: "attention_double"
+  arch_decoder: "c1_double"
+  mask_feat_downsample_rate: 1
+  att_mat_downsample_rate: 1
+  fc_dim: 2048
+  att_fc_dim: 512
   normalize_key: True
 
 TRAIN:
   batch_size_per_gpu: 2
-  num_epoch: 30
+  num_epoch: 25
   start_epoch: 0
   epoch_iters: 5000
   optim: "SGD"
@@ -33,16 +37,17 @@ TRAIN:
   weight_decay: 1e-4
   deep_sup_scale: 0.4
   fix_bn: False
-  workers: 16
+  workers: 4
   disp_iter: 20
   seed: 304
+  save_freq: 5
 
 VAL:
   visualize: False
-  checkpoint: "epoch_30.pth"
+  checkpoint: "epoch_25.pth"
 
 TEST:
-  checkpoint: "epoch_30.pth"
+  checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/ade20k-memory-separate-real-hrnetv2-c1-normKey-pick01in10"
+DIR: "ckpt/ade20k-memory-separate-real-resnet101dilated-c1-attDouble-normKey-pick01in10-small"

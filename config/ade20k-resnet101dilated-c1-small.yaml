@@ -10,7 +10,7 @@ DATASET:
   random_flip: True
 
 MODEL:
-  arch_encoder: "resnet101dilated"
+  arch_encoder: "resnet50dilated"
   arch_decoder: "c1"
   fc_dim: 2048
 

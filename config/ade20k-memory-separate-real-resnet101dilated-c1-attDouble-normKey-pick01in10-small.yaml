@@ -21,7 +21,7 @@ MODEL:
   mask_feat_downsample_rate: 1
   att_mat_downsample_rate: 1
   fc_dim: 2048
-  att_fc_dim: 512
+  att_fc_dim: 2048
   normalize_key: True
 
 TRAIN:
